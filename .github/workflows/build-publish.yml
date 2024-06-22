@@ -42,8 +42,8 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push container image to registry
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: index.docker.io/${{ secrets.DOCKER_USERNAME }}/zplex-api:${{ github.sha }}
+          tags: index.docker.io/${{ secrets.DOCKER_USERNAME }}/zplex-api:latest
