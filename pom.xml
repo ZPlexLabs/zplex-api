@@ -18,6 +18,7 @@
         <module>api</module>
         <module>auth</module>
         <module>common</module>
+        <module>health</module>
     </modules>
     <properties>
         <java.version>21</java.version>
