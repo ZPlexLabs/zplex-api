@@ -1,4 +1,4 @@
-package zechs.zplex.api.config;
+package zechs.zplex.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
