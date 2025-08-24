@@ -159,8 +159,15 @@ public class AuthController {
     })
     public ResponseEntity<?> deleteUser(@PathVariable("username") String username) {
         try {
+            if ("admin".equalsIgnoreCase(username)) {
+                throw new AdminDeletionNotAllowedException();
+            }
             userService.deleteUser(username);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } catch (AdminDeletionNotAllowedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
         } catch (UserDoesNotExist notExist) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
