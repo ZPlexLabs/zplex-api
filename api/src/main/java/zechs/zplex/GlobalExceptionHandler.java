@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import zechs.zplex.common.model.ErrorResponse;
 
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,7 +32,7 @@ public class GlobalExceptionHandler {
         };
     }
 
-    @ExceptionHandler(DataAccessException.class)
+    @ExceptionHandler(exception = {DataAccessException.class, SQLException.class})
     public ResponseEntity<?> handleDatabaseExceptions(DataAccessException ex) {
         logger.log(Level.WARNING, "Database error", ex);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
