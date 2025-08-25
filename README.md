@@ -1,10 +1,13 @@
 # ZPlex API
+
 **zplex-api** is a Spring Boot–based backend service that powers the Zplex platform.  
-It provides authentication, user management, and integrations with external services like **PostgreSQL**, **Redis**, and **Google Drive**.
+It provides authentication, user management, and integrations with external services like **PostgreSQL**, **Redis**, and
+**Google Drive**.
 
 ---
 
 ## 🚀 Features
+
 - Secure authentication with JWT
 - Admin user bootstrap
 - PostgreSQL persistence
@@ -15,7 +18,8 @@ It provides authentication, user management, and integrations with external serv
 ---
 
 ## 📦 Requirements
-- Java 17+
+
+- Java 21+
 - Maven 3.9+
 - PostgreSQL
 - Redis
@@ -29,19 +33,22 @@ The application is configured through environment variables and Spring Boot prop
 Below are the required parameters:
 
 ### 🔑 Authentication & Security
-| Variable        | Description                              | Example |
-|-----------------|------------------------------------------|---------|
-| `ADMIN_PASSWORD` | Password for the default admin account.  | `sirzechs` |
-| `SECRET_KEY`    | 256-bit secret key for signing JWT tokens. | `supersecretkey123...` |
+
+| Variable         | Description                                | Example                |
+|------------------|--------------------------------------------|------------------------|
+| `ADMIN_PASSWORD` | Password for the default admin account.    | `sirzechs`             |
+| `SECRET_KEY`     | 256-bit secret key for signing JWT tokens. | `supersecretkey123...` |
 
 ### 🗄 Database (PostgreSQL)
-| Variable                 | Description                          | Example |
-|---------------------------|--------------------------------------|---------|
+
+| Variable                  | Description                          | Example                             |
+|---------------------------|--------------------------------------|-------------------------------------|
 | `ZPLEX_DATABASE_URL`      | Database URL without `jdbc:` prefix. | `postgresql://localhost:5432/zplex` |
-| `ZPLEX_DATABASE_USERNAME` | Database username.                   | `zplex_user` |
-| `ZPLEX_DATABASE_PASSWORD` | Database password.                   | `mypassword` |
+| `ZPLEX_DATABASE_USERNAME` | Database username.                   | `zplex_user`                        |
+| `ZPLEX_DATABASE_PASSWORD` | Database password.                   | `mypassword`                        |
 
 **Spring Boot Properties (auto-configured in `application.properties`):**
+
 ```properties
 spring.datasource.url=jdbc:${ZPLEX_DATABASE_URL}?sslmode=require
 spring.datasource.username=${ZPLEX_DATABASE_USERNAME}
@@ -55,7 +62,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 ### 📂 Google Drive Integration
 
 | Variable                         | Description                        | Example                                 |
-| -------------------------------- | ---------------------------------- | --------------------------------------- |
+|----------------------------------|------------------------------------|-----------------------------------------|
 | `GOOGLE_DRIVE_CLIENT_EMAIL`      | Client email from service account. | `zplex@project.iam.gserviceaccount.com` |
 | `GOOGLE_DRIVE_CLIENT_ID`         | Google API client ID.              | `123456789.apps.googleusercontent.com`  |
 | `GOOGLE_DRIVE_PRIVATE_KEY_ID`    | Service account private key ID.    | `abc1234567890`                         |
@@ -64,7 +71,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 ### ⚡ Redis Cache
 
 | Variable         | Description     | Example      |
-| ---------------- | --------------- | ------------ |
+|------------------|-----------------|--------------|
 | `REDIS_HOST`     | Redis hostname. | `redis`      |
 | `REDIS_PORT`     | Redis port.     | `6379`       |
 | `REDIS_USERNAME` | Redis username. | `default`    |
