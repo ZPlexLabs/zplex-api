@@ -29,7 +29,6 @@ public class AuthController {
     private final UserService userService;
     private final TokenService tokenService;
 
-    @Autowired
     public AuthController(UserService userService, TokenService tokenService) {
         this.userService = userService;
         this.tokenService = tokenService;
