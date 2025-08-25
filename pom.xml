@@ -19,10 +19,12 @@
         <module>auth</module>
         <module>common</module>
         <module>health</module>
+        <module>filter-parser</module>
     </modules>
     <properties>
         <java.version>21</java.version>
         <jsonwebtoken.version>0.12.6</jsonwebtoken.version>
+        <antlr.version>4.13.2</antlr.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
