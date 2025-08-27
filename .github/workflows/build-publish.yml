@@ -63,6 +63,5 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/zplex-api:latest
-            ${{ secrets.DOCKER_USERNAME }}/zplex-api:dev
           build-args: |
             TZ=Asia/Kolkata
