@@ -44,6 +44,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/auth/admin/users/{username}")
                         .hasAuthority(Capabilities.DELETE_USERS.getIdAsString())
 
+                        // View content
+                        .requestMatchers(HttpMethod.GET, Endpoints.VIEW)
+                        .hasAuthority(Capabilities.VIEW.getIdAsString())
+
                         // Deny everything else
                         .anyRequest().denyAll()
                 );

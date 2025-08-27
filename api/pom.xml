@@ -30,6 +30,12 @@
             <artifactId>health</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>zechs.zplex</groupId>
+            <artifactId>suggestions</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

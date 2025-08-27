@@ -18,4 +18,8 @@ public class Endpoints {
             "/api/auth/refresh"
     };
 
+    public static final String[] VIEW = {
+            "/api/suggestion",
+            "/api/suggestion/search"
+    };
 }
