@@ -5,10 +5,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import zechs.zplex.auth.exception.*;
 import zechs.zplex.auth.model.RefreshToken;
@@ -22,6 +23,7 @@ import zechs.zplex.common.model.ErrorResponse;
 import java.util.Optional;
 
 
+@Validated
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -57,7 +59,7 @@ public class AuthController {
                     )
             )
     })
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             User user = userService.getUserByUsername(loginRequest.username());
             if (user == null) {
@@ -97,13 +99,8 @@ public class AuthController {
                     )
             )
     })
-    public ResponseEntity<?> signup(@RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest signupRequest) {
         try {
-            if (signupRequest.password().length() < 8) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(new ErrorResponse("Password must be at least 8 characters"));
-            }
             userService.createNewUser(signupRequest);
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (UsernameConflict conflict) {
@@ -129,7 +126,7 @@ public class AuthController {
             )
     })
     public ResponseEntity<?> updateUser(@PathVariable("username") String username,
-                                        @RequestBody UpdateCapabilityRequest updateCapabilityRequest) {
+                                        @Valid @RequestBody UpdateCapabilityRequest updateCapabilityRequest) {
         try {
             userService.updateUserCapabilities(username, updateCapabilityRequest.capabilities());
             return ResponseEntity.status(HttpStatus.ACCEPTED).build();
@@ -217,7 +214,7 @@ public class AuthController {
                             schema = @Schema(implementation = TokenRefreshRequest.class)
                     )
             )
-            @RequestBody TokenRefreshRequest request
+            @Valid @RequestBody TokenRefreshRequest request
     ) {
         String requestRefreshToken = request.refreshToken();
         try {
