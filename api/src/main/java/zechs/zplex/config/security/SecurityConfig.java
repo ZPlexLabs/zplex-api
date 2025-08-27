@@ -48,6 +48,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, Endpoints.VIEW)
                         .hasAuthority(Capabilities.VIEW.getIdAsString())
 
+                        // Capabilities endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/config/capabilities")
+                        .hasAnyAuthority(Capabilities.getAllCapabilities().stream()
+                                .map(cap -> String.valueOf(cap.getId()))
+                                .toArray(String[]::new))
+
                         // Deny everything else
                         .anyRequest().denyAll()
                 );
