@@ -11,6 +11,7 @@ import zechs.zplex.auth.model.User;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -44,9 +45,12 @@ public class JwtUtil {
             user.setFirstName(claims.get("firstName", String.class));
             user.setLastName(claims.get("lastName", String.class));
             user.setUsername(claims.get("username", String.class));
-            int[] capabilities = claims.get("capabilities", int[].class);
+            int[] capabilities = ((List<?>) claims.get("capabilities"))
+                    .stream()
+                    .mapToInt(o -> ((Number) o).intValue())
+                    .toArray();
             user.setCapabilities(capabilities);
-            logger.log(Level.INFO, "Successfully extracted jwt for user with " + capabilities.length + " capabilities.");
+            logger.log(Level.INFO, "Successfully extracted jwt for user " + user.getUsername() + " with " + capabilities.length + " capabilities.");
             return user;
         } catch (JwtException | NullPointerException e) {
             logger.log(Level.SEVERE, "Something went wrong in method extractUser(" + token + ")", e);
