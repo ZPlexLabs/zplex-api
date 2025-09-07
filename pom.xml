@@ -27,6 +27,8 @@
         <java.version>21</java.version>
         <jsonwebtoken.version>0.12.6</jsonwebtoken.version>
         <antlr.version>4.13.2</antlr.version>
+        <gson.version>2.13.1</gson.version>
+        <json.version>6.0.0</json.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

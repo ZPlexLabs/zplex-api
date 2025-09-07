@@ -54,6 +54,15 @@ public class SecurityConfig {
                                 .map(cap -> String.valueOf(cap.getId()))
                                 .toArray(String[]::new))
 
+                        // Config endpoint
+                        .requestMatchers(HttpMethod.GET, "/api/config")
+                        .hasAnyAuthority(
+                                Capabilities.VIEW.getIdAsString(),
+                                Capabilities.STREAM.getIdAsString(),
+                                Capabilities.DOWNLOAD.getIdAsString(),
+                                Capabilities.MANAGE_CONTENT.getIdAsString()
+                        )
+
                         // Deny everything else
                         .anyRequest().denyAll()
                 );
