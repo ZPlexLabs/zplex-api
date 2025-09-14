@@ -3,8 +3,12 @@ package zechs.zplex.movies.repository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import zechs.zplex.common.model.MediaType;
-import zechs.zplex.config.model.FilterConfig;
 import zechs.zplex.config.service.FilterConfigService;
+import zechs.zplex.filter_parser.model.Filter;
+import zechs.zplex.media.model.MediaListItem;
+import zechs.zplex.media.model.query_filters.OrderBy;
+import zechs.zplex.media.model.query_filters.SortBy;
+import zechs.zplex.media.repository.MediaRepository;
 import zechs.zplex.movies.model.LatestMovie;
 import zechs.zplex.movies.model.mapper.LatestMovieMapper;
 
@@ -12,16 +16,17 @@ import java.util.List;
 import java.util.logging.Logger;
 
 @Repository
-public class MoviesRepository {
+public class MoviesRepository extends MediaRepository {
 
     private static final Logger LOGGER = Logger.getLogger(MoviesRepository.class.getName());
 
-    private final JdbcTemplate jdbcTemplate;
-    private final FilterConfig filterConfig;
-
     public MoviesRepository(JdbcTemplate jdbcTemplate, FilterConfigService filterConfigService) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.filterConfig = filterConfigService.getFilterConfig(MediaType.MOVIE);
+        super(jdbcTemplate, filterConfigService, MediaType.MOVIE);
+    }
+
+    @Override
+    protected String getTableName() {
+        return "movies";
     }
 
     public List<LatestMovie> getLatestMovies(int count) {
@@ -30,6 +35,14 @@ public class MoviesRepository {
                 "ORDER BY f.modified_time DESC LIMIT ?";
         LOGGER.info("Fetching " + count + " latest movies from database...");
         return jdbcTemplate.query(sql, new LatestMovieMapper(), count);
+    }
+
+    public List<MediaListItem> getMovies(Filter filter, SortBy sort, OrderBy order, Integer pageNumber, Integer pageSize, boolean includeNull) {
+        return getMedia(filter, sort, order, pageNumber, pageSize, includeNull);
+    }
+
+    public Integer countMovies(Filter filter, boolean includeNull) {
+        return countMedia(filter, includeNull);
     }
 
 }
