@@ -18,8 +18,7 @@ public class RefreshToken {
     @Column(nullable = false)
     private Instant expiryDate;
 
-    // Link it to a user (assuming you already have a User entity)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
