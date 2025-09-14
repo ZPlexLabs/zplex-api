@@ -21,12 +21,15 @@ import zechs.zplex.auth.utils.PasswordUtil;
 import zechs.zplex.common.model.ErrorResponse;
 
 import java.util.Optional;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Validated
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger LOGGER = Logger.getLogger(AuthController.class.getName());
 
     private final UserService userService;
     private final TokenService tokenService;
@@ -63,6 +66,7 @@ public class AuthController {
         try {
             User user = userService.getUserByUsername(loginRequest.username());
             if (user == null) {
+                LOGGER.warning("User not found: " + loginRequest.username());
                 throw new UserDoesNotExist(loginRequest.username());
             }
 
@@ -72,14 +76,17 @@ public class AuthController {
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(tokenService.createRefreshToken(user));
             } else {
+                LOGGER.warning("Invalid password attempt for username: " + loginRequest.username());
                 return ResponseEntity
                         .status(HttpStatus.UNAUTHORIZED)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(new ErrorResponse("Invalid password"));
             }
         } catch (UserDoesNotExist notExist) {
+            LOGGER.warning("UserDoesNotExist exception: " + notExist.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during login", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
@@ -102,10 +109,13 @@ public class AuthController {
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest signupRequest) {
         try {
             userService.createNewUser(signupRequest);
+            LOGGER.info("User created successfully: " + signupRequest.username());
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (UsernameConflict conflict) {
+            LOGGER.warning("UsernameConflict exception: " + signupRequest.username());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during signup", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
@@ -113,7 +123,7 @@ public class AuthController {
     }
 
     @PutMapping("/admin/users/{username}/capabilities")
-    @Operation(summary = "Signup new users")
+    @Operation(summary = "Update user capabilities")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Capabilities updated"),
             @ApiResponse(responseCode = "400", description = "Some unknown capability in request"),
@@ -129,12 +139,16 @@ public class AuthController {
                                         @Valid @RequestBody UpdateCapabilityRequest updateCapabilityRequest) {
         try {
             userService.updateUserCapabilities(username, updateCapabilityRequest.capabilities());
+            LOGGER.info("Capabilities updated for username: " + username);
             return ResponseEntity.status(HttpStatus.ACCEPTED).build();
         } catch (UnknownCapability unknownCapability) {
+            LOGGER.warning("UnknownCapability exception for username: " + username);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (UserDoesNotExist notExist) {
+            LOGGER.warning("UserDoesNotExist exception for username: " + username);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during updating capabilities", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
@@ -156,17 +170,22 @@ public class AuthController {
     public ResponseEntity<?> deleteUser(@PathVariable("username") String username) {
         try {
             if ("admin".equalsIgnoreCase(username)) {
+                LOGGER.warning("Attempt to delete admin user: " + username);
                 throw new AdminDeletionNotAllowedException();
             }
             userService.deleteUser(username);
+            LOGGER.info("User deleted successfully: " + username);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         } catch (AdminDeletionNotAllowedException e) {
+            LOGGER.warning("AdminDeletionNotAllowed exception: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
         } catch (UserDoesNotExist notExist) {
+            LOGGER.warning("UserDoesNotExist exception for username: " + username);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during deleting user", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
@@ -220,25 +239,31 @@ public class AuthController {
         try {
             Optional<RefreshToken> findToken = tokenService.findByToken(requestRefreshToken);
             if (findToken.isPresent()) {
+                LOGGER.info("Refresh token found, verifying expiration");
                 // if its expired, it will throw exception
                 tokenService.verifyExpiration(findToken.get());
 
                 // generate new access token
                 User user = findToken.get().getUser();
+                LOGGER.info("Access token refreshed for user: " + user.getUsername());
                 return ResponseEntity
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(tokenService.createAccessToken(user));
             } else {
+                LOGGER.warning("Refresh token not found");
                 throw new RefreshTokenNotFoundException();
             }
         } catch (RefreshTokenNotFoundException e) {
+            LOGGER.warning("RefreshTokenNotFound exception: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (ExpiredRefreshToken e) {
+            LOGGER.warning("ExpiredRefreshToken exception: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse("Refresh token expired. Please login again."));
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during token refresh", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
