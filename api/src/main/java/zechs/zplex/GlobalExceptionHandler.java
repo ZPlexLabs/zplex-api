@@ -5,6 +5,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -34,7 +35,7 @@ public class GlobalExceptionHandler {
         };
     }
 
-    @ExceptionHandler(exception = {DataAccessException.class, SQLException.class})
+    @ExceptionHandler(exception = {DataAccessException.class, SQLException.class, BadSqlGrammarException.class})
     public ResponseEntity<?> handleDatabaseExceptions(DataAccessException ex) {
         logger.log(Level.WARNING, "Database error", ex);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
