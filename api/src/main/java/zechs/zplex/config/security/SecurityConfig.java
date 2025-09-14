@@ -35,7 +35,7 @@ public class SecurityConfig {
 
                         // Token Api
                         .requestMatchers(HttpMethod.POST, Endpoints.AUTH)
-                        .hasAnyAuthority(Capabilities.getAllCapabilitiesId())
+                        .permitAll()
 
                         // Admin endpoints
                         .requestMatchers(HttpMethod.PUT, "/api/auth/admin/users/{username}/capabilities")
