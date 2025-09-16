@@ -9,31 +9,24 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>api</artifactId>
+    <artifactId>tvshows</artifactId>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>zechs.zplex</groupId>
+            <artifactId>filter-parser</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>zechs.zplex</groupId>
             <artifactId>common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>zechs.zplex</groupId>
-            <artifactId>auth</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>zechs.zplex</groupId>
-            <artifactId>health</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>zechs.zplex</groupId>
-            <artifactId>suggestions</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -45,25 +38,8 @@
 
         <dependency>
             <groupId>zechs.zplex</groupId>
-            <artifactId>movies</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>zechs.zplex</groupId>
-            <artifactId>tvshows</artifactId>
+            <artifactId>media</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
-
-    <build>
-        <finalName>zplex-api-${project.version}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
-
 </project>

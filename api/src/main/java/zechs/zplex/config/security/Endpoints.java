@@ -20,6 +20,7 @@ public class Endpoints {
 
     public static final String[] VIEW = {
             "/api/movie/**",
+            "/api/tvshows/**",
             "/api/suggestion",
             "/api/suggestion/search"
     };
