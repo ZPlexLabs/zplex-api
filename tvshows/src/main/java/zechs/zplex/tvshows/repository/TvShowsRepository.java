@@ -10,7 +10,9 @@ import zechs.zplex.media.model.query_filters.OrderBy;
 import zechs.zplex.media.model.query_filters.SortBy;
 import zechs.zplex.media.repository.MediaRepository;
 import zechs.zplex.tvshows.model.LatestTvShow;
+import zechs.zplex.tvshows.model.TvShowDetails;
 import zechs.zplex.tvshows.model.mapper.LatestTvShowMapper;
+import zechs.zplex.tvshows.model.mapper.TvShowDetailsMapper;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -19,6 +21,8 @@ import java.util.logging.Logger;
 public class TvShowsRepository extends MediaRepository {
 
     private static final Logger LOGGER = Logger.getLogger(TvShowsRepository.class.getName());
+    private static final String SHOWS_TABLE_NAME = "shows";
+    private static final String SHOWS_DETAILS_VIEW_NAME = "show_details_mv";
 
     public TvShowsRepository(JdbcTemplate jdbcTemplate, FilterConfigService filterConfigService) {
         super(jdbcTemplate, filterConfigService, MediaType.SHOW);
@@ -26,7 +30,7 @@ public class TvShowsRepository extends MediaRepository {
 
     @Override
     protected String getTableName() {
-        return "shows";
+        return SHOWS_TABLE_NAME;
     }
 
     public List<LatestTvShow> getLatestShows(int count) {
@@ -59,5 +63,11 @@ public class TvShowsRepository extends MediaRepository {
 
     public Integer countShows(Filter filter, boolean includeNull) {
         return countMedia(filter, includeNull);
+    }
+
+    public TvShowDetails getShowById(Integer tmdbId) {
+        String sql = "SELECT * from " + SHOWS_DETAILS_VIEW_NAME + " WHERE id = ? LIMIT 1";
+        LOGGER.info("Fetching " + tmdbId + " TV Show details from database...");
+        return jdbcTemplate.queryForObject(sql, new TvShowDetailsMapper(), tmdbId);
     }
 }
