@@ -63,10 +63,10 @@ public class MovieController {
     })
     public ResponseEntity<?> getLatestMovies() {
         try {
-            List<LatestMovie> latestTvShows = moviesRepository.getLatestMovies(LATEST_MOVIES_COUNT);
+            List<LatestMovie> latestMovies = moviesRepository.getLatestMovies(LATEST_MOVIES_COUNT);
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(latestTvShows);
+                    .body(latestMovies);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Exception while fetching latest movies", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -111,6 +111,7 @@ public class MovieController {
             Filter filters = FilterExtractor.parseFilters(filterByValue);
             List<MediaListItem> movies = moviesRepository.getMovies(filters, sortByValue, orderByValue, pageNumberByValue, pageSizeByValue, includeNull);
             Integer count = moviesRepository.countMovies(filters, includeNull);
+
 
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
