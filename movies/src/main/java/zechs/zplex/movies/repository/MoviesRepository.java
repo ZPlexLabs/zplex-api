@@ -10,7 +10,9 @@ import zechs.zplex.media.model.query_filters.OrderBy;
 import zechs.zplex.media.model.query_filters.SortBy;
 import zechs.zplex.media.repository.MediaRepository;
 import zechs.zplex.movies.model.LatestMovie;
+import zechs.zplex.movies.model.MovieDetails;
 import zechs.zplex.movies.model.mapper.LatestMovieMapper;
+import zechs.zplex.movies.model.mapper.MovieDetailsMapper;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -19,6 +21,8 @@ import java.util.logging.Logger;
 public class MoviesRepository extends MediaRepository {
 
     private static final Logger LOGGER = Logger.getLogger(MoviesRepository.class.getName());
+    private static final String MOVIES_TABLE_NAME = "movies";
+    private static final String MOVIES_DETAILS_VIEW_NAME = "movie_details_mv";
 
     public MoviesRepository(JdbcTemplate jdbcTemplate, FilterConfigService filterConfigService) {
         super(jdbcTemplate, filterConfigService, MediaType.MOVIE);
@@ -26,7 +30,7 @@ public class MoviesRepository extends MediaRepository {
 
     @Override
     protected String getTableName() {
-        return "movies";
+        return MOVIES_TABLE_NAME;
     }
 
     public List<LatestMovie> getLatestMovies(int count) {
@@ -43,6 +47,12 @@ public class MoviesRepository extends MediaRepository {
 
     public Integer countMovies(Filter filter, boolean includeNull) {
         return countMedia(filter, includeNull);
+    }
+
+    public MovieDetails getMovieById(Integer tmdbId) {
+        String sql = "SELECT * from " + MOVIES_DETAILS_VIEW_NAME + " WHERE id = ? LIMIT 1";
+        LOGGER.info("Fetching " + tmdbId + " movie details from database...");
+        return jdbcTemplate.queryForObject(sql, new MovieDetailsMapper(), tmdbId);
     }
 
 }

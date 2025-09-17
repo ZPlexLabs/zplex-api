@@ -7,10 +7,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +24,7 @@ import zechs.zplex.media.model.MediaListItem;
 import zechs.zplex.media.model.query_filters.OrderBy;
 import zechs.zplex.media.model.query_filters.SortBy;
 import zechs.zplex.movies.model.LatestMovie;
+import zechs.zplex.movies.model.MovieDetails;
 import zechs.zplex.movies.repository.MoviesRepository;
 
 import java.util.List;
@@ -123,5 +126,50 @@ public class MovieController {
                     .body(new ErrorResponse(e.getMessage()));
         }
     }
+
+    @GetMapping("/{tmdbId}")
+    @Operation(summary = "Get detailed information of a movie by its ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Successfully fetched movie details.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = MovieDetails.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "404",
+                    description = "Movie not found.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "500",
+                    description = "Internal server error.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> getMovieById(@PathVariable("tmdbId") Integer tmdbId) {
+        try {
+            MovieDetails movie = moviesRepository.getMovieById(tmdbId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(movie);
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.log(Level.WARNING, "No movie found with id " + tmdbId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse("Movie with id " + tmdbId + " does not exists"));
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception while fetching movie details for id=" + tmdbId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
 
 }
