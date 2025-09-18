@@ -24,6 +24,7 @@ import zechs.zplex.filter_parser.model.Filter;
 import zechs.zplex.media.model.MediaListItem;
 import zechs.zplex.media.model.query_filters.OrderBy;
 import zechs.zplex.media.model.query_filters.SortBy;
+import zechs.zplex.tvshows.model.Episode;
 import zechs.zplex.tvshows.model.LatestTvShow;
 import zechs.zplex.tvshows.model.Season;
 import zechs.zplex.tvshows.model.TvShowDetails;
@@ -221,5 +222,57 @@ public class TvShowsController {
                     .body(new ErrorResponse(e.getMessage()));
         }
     }
+
+    @GetMapping("/{tmdbId}/seasons/{seasonId}")
+    @Operation(summary = "Get all episodes of a season by its ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Successfully fetched episodes for the season.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            array = @ArraySchema(schema = @Schema(implementation = Episode.class))
+                    )
+            ),
+            @ApiResponse(responseCode = "404",
+                    description = "Season or episodes not found.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "500",
+                    description = "Internal server error.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> getEpisodesBySeasonId(@PathVariable("tmdbId") Integer tmdbId,
+                                                   @PathVariable("seasonId") Integer seasonId) {
+        try {
+            List<Episode> episodes = tvShowsRepository.getEpisodesBySeasonId(seasonId);
+            if (episodes == null || episodes.isEmpty()) {
+                LOGGER.log(Level.WARNING, "No episodes found for Season with id " + seasonId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(new ErrorResponse("No episodes found for Season with id " + seasonId));
+            }
+            return ResponseEntity.status(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(episodes);
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.log(Level.WARNING, "No Season found with id " + seasonId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse("Season with id " + seasonId + " does not exist"));
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception while fetching episodes for Season id=" + seasonId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
 
 }

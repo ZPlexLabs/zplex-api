@@ -9,9 +9,11 @@ import zechs.zplex.media.model.MediaListItem;
 import zechs.zplex.media.model.query_filters.OrderBy;
 import zechs.zplex.media.model.query_filters.SortBy;
 import zechs.zplex.media.repository.MediaRepository;
+import zechs.zplex.tvshows.model.Episode;
 import zechs.zplex.tvshows.model.LatestTvShow;
 import zechs.zplex.tvshows.model.Season;
 import zechs.zplex.tvshows.model.TvShowDetails;
+import zechs.zplex.tvshows.model.mapper.EpisodeMapper;
 import zechs.zplex.tvshows.model.mapper.LatestTvShowMapper;
 import zechs.zplex.tvshows.model.mapper.SeasonMapper;
 import zechs.zplex.tvshows.model.mapper.TvShowDetailsMapper;
@@ -91,5 +93,18 @@ public class TvShowsRepository extends MediaRepository {
                 """;
         LOGGER.info("Fetching seasons for TV Show ID " + tmdbId + " from database...");
         return jdbcTemplate.query(sql, new SeasonMapper(), tmdbId);
+    }
+
+    public List<Episode> getEpisodesBySeasonId(Integer seasonId) {
+        String sql = """
+                SELECT id, title, episode_number, season_number, overview, runtime,
+                       To_char(To_timestamp(airdate / 1000), 'DD/MM/YYYY') AS release_date,
+                       still_path, file_id
+                FROM   episodes
+                WHERE  season_id = ?
+                ORDER  BY episode_number
+                """;
+        LOGGER.info("Fetching episodes for Season ID " + seasonId + " from database...");
+        return jdbcTemplate.query(sql, new EpisodeMapper(), seasonId);
     }
 }
