@@ -10,8 +10,10 @@ import zechs.zplex.media.model.query_filters.OrderBy;
 import zechs.zplex.media.model.query_filters.SortBy;
 import zechs.zplex.media.repository.MediaRepository;
 import zechs.zplex.tvshows.model.LatestTvShow;
+import zechs.zplex.tvshows.model.Season;
 import zechs.zplex.tvshows.model.TvShowDetails;
 import zechs.zplex.tvshows.model.mapper.LatestTvShowMapper;
+import zechs.zplex.tvshows.model.mapper.SeasonMapper;
 import zechs.zplex.tvshows.model.mapper.TvShowDetailsMapper;
 
 import java.util.List;
@@ -69,5 +71,25 @@ public class TvShowsRepository extends MediaRepository {
         String sql = "SELECT * from " + SHOWS_DETAILS_VIEW_NAME + " WHERE id = ? LIMIT 1";
         LOGGER.info("Fetching " + tmdbId + " TV Show details from database...");
         return jdbcTemplate.queryForObject(sql, new TvShowDetailsMapper(), tmdbId);
+    }
+
+
+    public List<Season> getSeasonsByShowId(Integer tmdbId) {
+        String sql = """
+                WITH episode_count AS (SELECT season_id, COUNT(*) AS episode_count FROM episodes GROUP BY season_id)
+                SELECT s.id,
+                       s.name,
+                       to_char(to_timestamp(s.release_date / 1000), 'DD/MM/YYYY') AS release_date,
+                       s.release_year,
+                       s.poster_path,
+                       s.season_number,
+                       ec.episode_count
+                FROM seasons s
+                         LEFT JOIN episode_count ec ON s.id = ec.season_id
+                WHERE s.show_id = ?
+                ORDER BY s.season_number
+                """;
+        LOGGER.info("Fetching seasons for TV Show ID " + tmdbId + " from database...");
+        return jdbcTemplate.query(sql, new SeasonMapper(), tmdbId);
     }
 }

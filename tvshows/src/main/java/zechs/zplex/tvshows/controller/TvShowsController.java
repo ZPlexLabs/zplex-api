@@ -25,6 +25,7 @@ import zechs.zplex.media.model.MediaListItem;
 import zechs.zplex.media.model.query_filters.OrderBy;
 import zechs.zplex.media.model.query_filters.SortBy;
 import zechs.zplex.tvshows.model.LatestTvShow;
+import zechs.zplex.tvshows.model.Season;
 import zechs.zplex.tvshows.model.TvShowDetails;
 import zechs.zplex.tvshows.repository.TvShowsRepository;
 
@@ -165,6 +166,56 @@ public class TvShowsController {
                     .body(new ErrorResponse("TV Show with id " + tmdbId + " does not exists"));
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Exception while fetching TV Show details for id=" + tmdbId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{tmdbId}/seasons")
+    @Operation(summary = "Get all seasons of a TV Show by its ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Successfully fetched seasons of the TV Show.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            array = @ArraySchema(schema = @Schema(implementation = Season.class))
+                    )
+            ),
+            @ApiResponse(responseCode = "404",
+                    description = "TV Show or seasons not found.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "500",
+                    description = "Internal server error.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> getSeasonsByShowId(@PathVariable("tmdbId") Integer tmdbId) {
+        try {
+            List<Season> seasons = tvShowsRepository.getSeasonsByShowId(tmdbId);
+            if (seasons == null || seasons.isEmpty()) {
+                LOGGER.log(Level.WARNING, "No seasons found for TV Show with id " + tmdbId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(new ErrorResponse("No seasons found for TV Show with id " + tmdbId));
+            }
+            return ResponseEntity.status(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(seasons);
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.log(Level.WARNING, "No TV Show found with id " + tmdbId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse("TV Show with id " + tmdbId + " does not exist"));
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception while fetching seasons for TV Show id=" + tmdbId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));

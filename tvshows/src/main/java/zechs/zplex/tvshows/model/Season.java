@@ -2,7 +2,7 @@ package zechs.zplex.tvshows.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record LatestSeason(
+public record Season(
         Integer id,
         String name,
         @JsonProperty("poster_path") String posterPath,

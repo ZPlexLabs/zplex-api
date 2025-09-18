@@ -26,5 +26,5 @@ public record TvShowDetails(
         List<Studio> studios,
         List<Cast> casts,
         List<Crew> crews,
-        LatestSeason latestSeason) {
+        Season latestSeason) {
 }

@@ -7,7 +7,7 @@ import zechs.zplex.config.model.IdNamePair;
 import zechs.zplex.media.model.Cast;
 import zechs.zplex.media.model.Crew;
 import zechs.zplex.media.model.Studio;
-import zechs.zplex.tvshows.model.LatestSeason;
+import zechs.zplex.tvshows.model.Season;
 import zechs.zplex.tvshows.model.TvShowDetails;
 
 import java.sql.ResultSet;
@@ -46,9 +46,9 @@ public class TvShowDetailsMapper implements RowMapper<TvShowDetails> {
             });
 
             String latestSeasonJson = rs.getString("latest_season");
-            LatestSeason latestSeason = null;
+            Season latestSeason = null;
             if (latestSeasonJson != null && !latestSeasonJson.isEmpty()) {
-                latestSeason = objectMapper.readValue(latestSeasonJson, LatestSeason.class);
+                latestSeason = objectMapper.readValue(latestSeasonJson, Season.class);
             }
             return new TvShowDetails(tmdbId, title, imdbId, imdbRating, imdbVotes, releaseDate, release, parentalRating, posterPath, backdropPath, logoPath, trailerLink, plot, director, genres, studios, casts, crews, latestSeason);
         } catch (Exception e) {
