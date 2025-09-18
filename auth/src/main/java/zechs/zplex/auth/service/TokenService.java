@@ -24,7 +24,7 @@ public class TokenService {
     }
 
     public TokenAccessResponse createAccessToken(User user) {
-        return new TokenAccessResponse(jwtUtil.generateRefreshToken(user));
+        return new TokenAccessResponse(jwtUtil.generateAccessToken(user));
     }
 
     public TokenRefreshResponse createRefreshToken(User user) {
