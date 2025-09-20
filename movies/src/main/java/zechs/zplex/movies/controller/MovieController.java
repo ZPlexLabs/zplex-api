@@ -112,13 +112,21 @@ public class MovieController {
             Integer pageSizeByValue = pageSize.orElse(25);
 
             Filter filters = FilterExtractor.parseFilters(filterByValue);
-            List<MediaListItem> movies = moviesRepository.getMovies(filters, sortByValue, orderByValue, pageNumberByValue, pageSizeByValue, includeNull);
             Integer count = moviesRepository.countMovies(filters, includeNull);
+            int pageCount = (int) Math.ceil((double) count / pageSizeByValue);
+            if (pageNumberByValue > pageCount && pageCount != 0) {
+                return ResponseEntity.badRequest()
+                        .body(new ErrorResponse(
+                                "Invalid page number",
+                                String.format("Requested page %d exceeds total pages %d", pageNumberByValue, pageCount)
+                        ));
+            }
 
+            List<MediaListItem> movies = moviesRepository.getMovies(filters, sortByValue, orderByValue, pageNumberByValue, pageSizeByValue, includeNull);
 
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(new PaginatedResponse<>(movies, pageNumberByValue, count));
+                    .body(new PaginatedResponse<>(movies, pageNumberByValue, pageCount));
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Exception while fetching movies", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
