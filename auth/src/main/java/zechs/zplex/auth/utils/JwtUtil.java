@@ -45,6 +45,7 @@ public class JwtUtil {
             user.setFirstName(claims.get("firstName", String.class));
             user.setLastName(claims.get("lastName", String.class));
             user.setUsername(claims.get("username", String.class));
+            user.setAdult(claims.get("isAdult", Boolean.class));
             int[] capabilities = ((List<?>) claims.get("capabilities"))
                     .stream()
                     .mapToInt(o -> ((Number) o).intValue())
