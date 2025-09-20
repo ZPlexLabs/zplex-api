@@ -9,6 +9,6 @@ public record Season(
         @JsonProperty("release_date") String releaseDate,
         @JsonProperty("release_year") Short releaseYear,
         @JsonProperty("season_number") Short seasonNumber,
-        @JsonProperty("episodes_count") Short EpisodeCount
+        @JsonProperty("episodes_count") Short episodeCount
 ) {
 }
