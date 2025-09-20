@@ -6,12 +6,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 import zechs.zplex.auth.exception.JwtTokenNotValid;
+import zechs.zplex.auth.model.AuthenticatedUser;
+import zechs.zplex.auth.model.TokenType;
 import zechs.zplex.auth.model.User;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -38,7 +41,7 @@ public class JwtUtil {
         jwtKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public User extractUser(String token) throws JwtTokenNotValid {
+    public AuthenticatedUser extractUser(String token) throws JwtTokenNotValid {
         try {
             Claims claims = extractAllClaims(token);
             User user = new User();
@@ -51,9 +54,11 @@ public class JwtUtil {
                     .mapToInt(o -> ((Number) o).intValue())
                     .toArray();
             user.setCapabilities(capabilities);
+            String tokenTypeStr = claims.get("tokenType", String.class);
+            TokenType tokenType = TokenType.valueOf(tokenTypeStr.toUpperCase(Locale.ENGLISH));
             logger.log(Level.INFO, "Successfully extracted jwt for user " + user.getUsername() + " with " + capabilities.length + " capabilities.");
-            return user;
-        } catch (JwtException | NullPointerException e) {
+            return new AuthenticatedUser(user, tokenType);
+        } catch (JwtException | NullPointerException | IllegalArgumentException e) {
             logger.log(Level.SEVERE, "Something went wrong in method extractUser(" + token + ")", e);
             throw new JwtTokenNotValid();
         }
@@ -102,14 +107,14 @@ public class JwtUtil {
     }
 
     public String generateRefreshToken(User user) {
-        return createToken(user, REFRESH_TOKEN_VALIDATE_IN_HOURS);
+        return createToken(user, REFRESH_TOKEN_VALIDATE_IN_HOURS, TokenType.REFRESH);
     }
 
     public String generateAccessToken(User user) {
-        return createToken(user, ACCESS_TOKEN_VALIDATE_IN_HOURS);
+        return createToken(user, ACCESS_TOKEN_VALIDATE_IN_HOURS, TokenType.ACCESS);
     }
 
-    private String createToken(User user, int duration) {
+    private String createToken(User user, int duration, TokenType tokenType) {
         long currentTimeMillis = System.currentTimeMillis();
 
         return Jwts.builder()
@@ -118,6 +123,7 @@ public class JwtUtil {
                 .claim("username", user.getUsername())
                 .claim("capabilities", user.getCapabilities())
                 .claim("isAdult", user.getAdult())
+                .claim("tokenType", tokenType.name().toLowerCase(Locale.ENGLISH))
                 .issuer(TOKEN_ISSUER)
                 .issuedAt(new Date(currentTimeMillis))
                 .expiration(new Date(currentTimeMillis + convertToHours(duration)))

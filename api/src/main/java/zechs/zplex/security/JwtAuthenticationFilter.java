@@ -16,6 +16,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import zechs.zplex.auth.exception.JwtTokenNotValid;
+import zechs.zplex.auth.model.AuthenticatedUser;
+import zechs.zplex.auth.model.TokenType;
 import zechs.zplex.auth.model.User;
 import zechs.zplex.auth.utils.JwtUtil;
 
@@ -51,7 +53,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             final String jwt = authHeader.substring(7);
-            final User user = jwtUtil.extractUser(jwt);
+            final AuthenticatedUser authenticatedUser = jwtUtil.extractUser(jwt);
+            if (authenticatedUser.tokenType() == TokenType.REFRESH) {
+                logger.log(Level.WARNING, "Refresh token used in Authorization header. This is not allowed.");
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+            User user = authenticatedUser.user();
 
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
