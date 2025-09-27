@@ -1,18 +1,17 @@
-FROM ubuntu:20.04
-
-ENV TZ=Asia/Kolkata
+# ----------------------
+# Stage 1: Build
+# ----------------------
+FROM maven:3.9.5-eclipse-temurin-21-alpine AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-RUN apt-get update && \
-apt-get install -y -q openjdk-21-jdk tzdata && \
-ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime && \
-echo "${TZ}" > /etc/timezone && \
-apt-get clean && \
-rm -rf /var/lib/apt/lists/*
-
-COPY target/zplex-api*.jar /app/zplex-api.jar
-CMD ["java", "-jar", "/app/zplex-api.jar", "--server.port=${PORT}", "--spring.profiles.active=prod", "--springdoc.api-docs.enabled=false", \
-     "--spring.application.name=${SPRING_APPLICATION_NAME}", \
-     "--spring.datasource.url=${SPRING_DATASOURCE_URL}", \
-     "--spring.datasource.username=${SPRING_DATASOURCE_USERNAME}", \
-     "--spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}"]
+# ----------------------
+# Stage 2: Runtime
+# ----------------------
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+ENV TZ=Asia/Kolkata
+RUN echo "${TZ}" > /etc/timezone
+COPY --from=build /app/api/target/zplex-api-*.jar zplex-api.jar
+CMD ["java", "-Duser.timezone=Asia/Kolkata", "-jar", "zplex-api.jar", "--server.port=${PORT}"]
