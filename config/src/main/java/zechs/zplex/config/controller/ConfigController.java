@@ -1,13 +1,11 @@
 package zechs.zplex.config.controller;
 
-import com.google.gson.Gson;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import zechs.zplex.common.capability.Capabilities;
 import zechs.zplex.common.capability.Capability;
 import zechs.zplex.common.model.ErrorResponse;
-import zechs.zplex.common.utils.AESUtil;
 import zechs.zplex.config.model.ConfigResponse;
-import zechs.zplex.config.model.GoogleServiceAccount;
 import zechs.zplex.config.service.FilterConfigService;
 
 import java.util.logging.Level;
@@ -31,11 +27,9 @@ public class ConfigController {
 
     private static final Logger LOGGER = Logger.getLogger(ConfigController.class.getName());
     private final FilterConfigService configService;
-    private final Gson gson;
 
-    public ConfigController(FilterConfigService configService, Gson gson) {
+    public ConfigController(FilterConfigService configService) {
         this.configService = configService;
-        this.gson = gson;
     }
 
     @GetMapping("/capabilities")
@@ -86,22 +80,10 @@ public class ConfigController {
                     )
             )
     })
-    public ResponseEntity<?> getConfigs(HttpServletRequest request) {
+    public ResponseEntity<?> getConfigs() {
         try {
-            String requestToken = request.getHeader("Authorization").substring(7)
-                    .trim();
-
             ConfigResponse config = new ConfigResponse();
-
-            GoogleServiceAccount serviceAccount = new GoogleServiceAccount();
-            serviceAccount.setClientId(System.getenv("GOOGLE_DRIVE_CLIENT_ID"));
-            serviceAccount.setClientEmail(System.getenv("GOOGLE_DRIVE_CLIENT_EMAIL"));
-            serviceAccount.setPrivateKeyPkcs8(System.getenv("GOOGLE_DRIVE_PRIVATE_KEY_PKCS8"));
-            serviceAccount.setPrivateKeyId(System.getenv("GOOGLE_DRIVE_PRIVATE_KEY_ID"));
-
-            String encryptedServiceAccount = AESUtil.encrypt(gson.toJson(serviceAccount), requestToken);
-            config.setServiceAccount(encryptedServiceAccount);
-
+            config.setStreamingHost(System.getenv().getOrDefault("ZPLEX_STREAM_HOST", ""));
             config.addFilter(configService.getFilterConfig(zechs.zplex.common.model.MediaType.SHOW));
             config.addFilter(configService.getFilterConfig(zechs.zplex.common.model.MediaType.MOVIE));
 

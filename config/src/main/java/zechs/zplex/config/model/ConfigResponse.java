@@ -4,23 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigResponse {
-    private String serviceAccount;
+    private String streamingHost;
     private List<FilterConfig> filters;
 
     public ConfigResponse() {
     }
 
-    public ConfigResponse(String serviceAccount, List<FilterConfig> filters) {
-        this.serviceAccount = serviceAccount;
+    public ConfigResponse(String streamingHost, List<FilterConfig> filters) {
+        this.streamingHost = streamingHost;
         this.filters = filters;
     }
 
-    public String getServiceAccount() {
-        return serviceAccount;
+    public String getStreamingHost() {
+        return streamingHost;
     }
 
-    public void setServiceAccount(String serviceAccount) {
-        this.serviceAccount = serviceAccount;
+    public void setStreamingHost(String streamingHost) {
+        this.streamingHost = streamingHost;
     }
 
     public List<FilterConfig> getFilters() {

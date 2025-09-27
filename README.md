@@ -12,7 +12,6 @@ It provides authentication, user management, and integrations with external serv
 - Admin user bootstrap
 - PostgreSQL persistence
 - Redis caching
-- Google Drive integration for storage
 - Configurable via environment variables
 
 ---
@@ -23,7 +22,6 @@ It provides authentication, user management, and integrations with external serv
 - Maven 3.9+
 - PostgreSQL
 - Redis
-- Google Cloud service account (for Drive integration)
 
 ---
 
@@ -36,7 +34,7 @@ Below are the required parameters:
 
 | Variable         | Description                                | Example                |
 |------------------|--------------------------------------------|------------------------|
-| `ADMIN_PASSWORD` | Password for the default admin account.    | `sirzechs`             |
+| `ADMIN_PASSWORD` | Password for the default admin account.    | `admin123`             |
 | `SECRET_KEY`     | 256-bit secret key for signing JWT tokens. | `supersecretkey123...` |
 
 ### 🗄 Database (PostgreSQL)
@@ -59,14 +57,13 @@ spring.jpa.properties.hibernate.format_sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 ````
 
-### 📂 Google Drive Integration
+### 📂 Streaming from Google Drive
 
-| Variable                         | Description                        | Example                                 |
-|----------------------------------|------------------------------------|-----------------------------------------|
-| `GOOGLE_DRIVE_CLIENT_EMAIL`      | Client email from service account. | `zplex@project.iam.gserviceaccount.com` |
-| `GOOGLE_DRIVE_CLIENT_ID`         | Google API client ID.              | `123456789.apps.googleusercontent.com`  |
-| `GOOGLE_DRIVE_PRIVATE_KEY_ID`    | Service account private key ID.    | `abc1234567890`                         |
-| `GOOGLE_DRIVE_PRIVATE_KEY_PKCS8` | Base64-encoded PKCS8 private key.  | `-----BEGIN PRIVATE KEY----- ...`       |
+Refer to [zplex-stream](https://github.com/ZPlexLabs/zplex-stream)
+
+| Variable            | Description                               | Example                               |
+|---------------------|-------------------------------------------|---------------------------------------|
+| `ZPLEX_STREAM_HOST` | Public URL of your deployed zplex-stream. | `https://zplex-stream.**.workers.dev` |
 
 ### ⚡ Redis Cache
 
@@ -102,10 +99,7 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_USERNAME=default
 REDIS_PASSWORD=mypassword
-GOOGLE_DRIVE_CLIENT_EMAIL=...
-GOOGLE_DRIVE_CLIENT_ID=...
-GOOGLE_DRIVE_PRIVATE_KEY_ID=...
-GOOGLE_DRIVE_PRIVATE_KEY_PKCS8=...
+ZPLEX_STREAM_HOST=https://zplex-stream.**.workers.dev
 ```
 
 ### 3. Build & run
