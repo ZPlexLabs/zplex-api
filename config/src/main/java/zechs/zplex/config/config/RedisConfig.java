@@ -9,12 +9,7 @@ public class RedisConfig {
 
     @Bean
     public JedisPooled jedis() {
-        return new JedisPooled(
-                System.getenv("REDIS_HOST"),
-                Integer.parseInt(System.getenv("REDIS_PORT")),
-                System.getenv("REDIS_USERNAME"),
-                System.getenv("REDIS_PASSWORD")
-        );
+        return new JedisPooled(RedisUrlBuilder.buildRedisUrl());
     }
 
 }
