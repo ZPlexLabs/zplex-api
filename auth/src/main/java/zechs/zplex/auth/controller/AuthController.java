@@ -237,7 +237,7 @@ public class AuthController {
     ) {
         String requestRefreshToken = request.refreshToken();
         try {
-            Optional<RefreshToken> findToken = tokenService.findByToken(requestRefreshToken);
+            Optional<RefreshToken> findToken = tokenService.findToken(requestRefreshToken);
             if (findToken.isPresent()) {
                 LOGGER.info("Refresh token found, verifying expiration");
                 // if its expired, it will throw exception

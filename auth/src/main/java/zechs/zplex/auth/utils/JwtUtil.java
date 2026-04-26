@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 import zechs.zplex.auth.exception.JwtTokenNotValid;
 import zechs.zplex.auth.model.AuthenticatedUser;
@@ -68,6 +69,10 @@ public class JwtUtil {
         return extractClaim(token, claims -> claims.get("username", String.class));
     }
 
+    public String extractJti(String token) throws JwtTokenNotValid {
+        return extractClaim(token, claims -> claims.get("jti", String.class));
+    }
+
     private String extractIssuer(String token) throws JwtTokenNotValid {
         return extractClaim(token, Claims::getIssuer);
     }
@@ -118,6 +123,7 @@ public class JwtUtil {
         long currentTimeMillis = System.currentTimeMillis();
 
         return Jwts.builder()
+                .claim("jti", UUID.randomUUID().toString())
                 .claim("firstName", user.getFirstName())
                 .claim("lastName", user.getLastName())
                 .claim("username", user.getUsername())

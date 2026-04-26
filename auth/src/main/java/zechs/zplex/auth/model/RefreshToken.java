@@ -1,7 +1,14 @@
 package zechs.zplex.auth.model;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.Instant;
 
 @Entity
@@ -13,7 +20,7 @@ public class RefreshToken {
     private Long id;
 
     @Column(columnDefinition = "TEXT", nullable = false, unique = true)
-    private String token;
+    private String jti;
 
     @Column(nullable = false)
     private Instant expiryDate;
@@ -25,8 +32,8 @@ public class RefreshToken {
     public RefreshToken() {
     }
 
-    public RefreshToken(String token, Instant expiryDate, User user) {
-        this.token = token;
+    public RefreshToken(String jti, Instant expiryDate, User user) {
+        this.jti = jti;
         this.expiryDate = expiryDate;
         this.user = user;
     }
@@ -35,12 +42,12 @@ public class RefreshToken {
         return id;
     }
 
-    public String getToken() {
-        return token;
+    public String getJti() {
+        return jti;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setJti(String jti) {
+        this.jti = jti;
     }
 
     public Instant getExpiryDate() {
@@ -63,7 +70,7 @@ public class RefreshToken {
     public String toString() {
         return "RefreshToken{" +
                 "id=" + id +
-                ", token='" + (token != null ? token.substring(0, Math.min(token.length(), 10)) + "..." : null) + '\'' +
+                ", jti='" + (jti != null ? jti : null) + '\'' +
                 ", expiryDate=" + expiryDate +
                 ", username=" + (user != null ? user.getUsername() : null) +
                 '}';
