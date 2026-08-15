@@ -75,7 +75,8 @@ version no longer matches the user's current version (`401`).
 
 ## 📺 Watch state (`/api/me`)
 
-Per-user, server-side watch state keyed by the JWT username (module `userdata`):
+Per-user, server-side watch state is keyed only by the username from the authenticated JWT
+(module `userdata`). These endpoints accept no client-supplied username or user id:
 
 | Endpoint | Body / Response | Description |
 |----------|-----------------|-------------|
