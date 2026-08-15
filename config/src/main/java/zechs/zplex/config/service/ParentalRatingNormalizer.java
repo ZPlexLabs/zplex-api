@@ -5,6 +5,8 @@ import zechs.zplex.config.model.RatingRank;
 import zechs.zplex.config.model.RatingRankInfo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -18,6 +20,8 @@ import java.util.regex.Pattern;
 public class ParentalRatingNormalizer {
 
     private static final Map<String, RatingRank> ALIASES = buildAliases();
+    private static final int MAX_DEFINED_RANK =
+            Arrays.stream(RatingRank.values()).mapToInt(RatingRank::getRank).max().orElse(Integer.MAX_VALUE);
 
     // Seals/placeholders that carry no reliable maturity level -> treated as unrated (governed by allowUnrated).
     private static final Set<String> UNRATED_TOKENS = Set.of(
@@ -50,6 +54,28 @@ public class ParentalRatingNormalizer {
     public Integer rankOf(String raw) {
         RatingRank rating = normalize(raw);
         return rating == null ? null : rating.getRank();
+    }
+
+    // Distinct raw ratings within the ceiling; null = no ceiling (user clears the top rank).
+    public String[] allowedRatings(Collection<String> distinctRatings, int maxRatingRank) {
+        if (maxRatingRank >= MAX_DEFINED_RANK) {
+            return null;
+        }
+        return distinctRatings.stream()
+                .filter(rating -> {
+                    Integer rank = rankOf(rating);
+                    return rank != null && rank <= maxRatingRank;
+                })
+                .distinct()
+                .toArray(String[]::new);
+    }
+
+    // Distinct raw ratings that carry no maturity level (governed by allowUnrated).
+    public String[] unratedRatings(Collection<String> distinctRatings) {
+        return distinctRatings.stream()
+                .filter(rating -> rankOf(rating) == null)
+                .distinct()
+                .toArray(String[]::new);
     }
 
     public List<RatingRankInfo> getCatalog() {

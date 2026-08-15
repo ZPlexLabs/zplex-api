@@ -4,7 +4,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import zechs.zplex.common.model.MediaType;
 import zechs.zplex.common.model.UserAccess;
 import zechs.zplex.config.model.FilterConfig;
-import zechs.zplex.config.model.RatingRank;
 import zechs.zplex.config.service.FilterConfigService;
 import zechs.zplex.config.service.ParentalRatingNormalizer;
 import zechs.zplex.filter_parser.model.Filter;
@@ -19,7 +18,6 @@ import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -29,8 +27,6 @@ import java.util.logging.Logger;
 public abstract class MediaRepository {
 
     private static final Logger LOGGER = Logger.getLogger(MediaRepository.class.getName());
-    private static final int MAX_DEFINED_RANK =
-            Arrays.stream(RatingRank.values()).mapToInt(RatingRank::getRank).max().orElse(Integer.MAX_VALUE);
 
     protected final JdbcTemplate jdbcTemplate;
     protected final FilterConfig filterConfig;
@@ -144,21 +140,11 @@ public abstract class MediaRepository {
     }
 
     private String[] allowedRatings(UserAccess access) {
-        if (access.getMaxRatingRank() >= MAX_DEFINED_RANK) {
-            return null; // no ceiling
-        }
-        return filterConfig.getParentalRatings().stream()
-                .filter(rating -> {
-                    Integer rank = ratingNormalizer.rankOf(rating);
-                    return rank != null && rank <= access.getMaxRatingRank();
-                })
-                .toArray(String[]::new);
+        return ratingNormalizer.allowedRatings(filterConfig.getParentalRatings(), access.getMaxRatingRank());
     }
 
     private String[] unratedRatings() {
-        return filterConfig.getParentalRatings().stream()
-                .filter(rating -> ratingNormalizer.rankOf(rating) == null)
-                .toArray(String[]::new);
+        return ratingNormalizer.unratedRatings(filterConfig.getParentalRatings());
     }
 
     private Array createArrayOrNull(Connection connection, Object[] values, String sqlType) throws SQLException {

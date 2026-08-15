@@ -1,5 +1,6 @@
 package zechs.zplex.common.model;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -49,5 +50,21 @@ public class UserAccess {
     public boolean isBlacklisted(MediaType mediaType, int tmdbId) {
         Set<Integer> ids = blacklist.get(mediaType);
         return ids != null && ids.contains(tmdbId);
+    }
+
+    // Deterministic identity of this effective access; used as a per-user cache key so entries refresh when access changes.
+    public String accessKey() {
+        int[] libraries = allowedLibraries.clone();
+        Arrays.sort(libraries);
+        StringBuilder key = new StringBuilder()
+                .append(Arrays.toString(libraries))
+                .append('|').append(maxRatingRank)
+                .append('|').append(allowUnrated);
+        for (MediaType type : MediaType.values()) {
+            Integer[] ids = getBlacklistedTmdbIds(type).toArray(new Integer[0]);
+            Arrays.sort(ids);
+            key.append('|').append(type.name()).append(Arrays.toString(ids));
+        }
+        return key.toString();
     }
 }

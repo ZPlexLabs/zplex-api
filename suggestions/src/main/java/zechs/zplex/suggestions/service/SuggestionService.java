@@ -2,6 +2,7 @@ package zechs.zplex.suggestions.service;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import zechs.zplex.common.model.UserAccess;
 import zechs.zplex.suggestions.model.SearchSuggestion;
 import zechs.zplex.suggestions.model.Suggestion;
 import zechs.zplex.suggestions.repository.SuggestionsRepository;
@@ -19,15 +20,15 @@ public class SuggestionService {
         this.repository = repository;
     }
 
-    @Cacheable(value = "suggestions", key = "#count", unless = "#result == null || #result.isEmpty()")
-    public List<Suggestion> getSuggestions(int count) {
+    @Cacheable(value = "suggestions", key = "#count + '-' + #access.accessKey()", unless = "#result == null || #result.isEmpty()")
+    public List<Suggestion> getSuggestions(int count, UserAccess access) {
         logger.info("Cache miss for suggestions with count=" + count);
-        return repository.getSuggestions(count);
+        return repository.getSuggestions(count, access);
     }
 
-    @Cacheable(value = "searchSuggestions", key = "#count", unless = "#result == null || #result.isEmpty()")
-    public List<SearchSuggestion> getSearchSuggestions(int count) {
+    @Cacheable(value = "searchSuggestions", key = "#count + '-' + #access.accessKey()", unless = "#result == null || #result.isEmpty()")
+    public List<SearchSuggestion> getSearchSuggestions(int count, UserAccess access) {
         logger.info("Cache miss for search suggestions with count=" + count);
-        return repository.getSearchSuggestions(count);
+        return repository.getSearchSuggestions(count, access);
     }
 }

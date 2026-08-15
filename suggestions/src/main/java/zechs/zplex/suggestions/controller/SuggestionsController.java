@@ -9,10 +9,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import zechs.zplex.auth.model.User;
+import zechs.zplex.auth.service.UserAccessService;
 import zechs.zplex.common.model.ErrorResponse;
+import zechs.zplex.common.model.UserAccess;
 import zechs.zplex.suggestions.model.SearchSuggestion;
 import zechs.zplex.suggestions.model.Suggestion;
 import zechs.zplex.suggestions.service.SuggestionService;
@@ -25,9 +29,11 @@ public class SuggestionsController {
 
     private static final int SUGGESTION_LIMIT = 25;
     private final SuggestionService suggestionService;
+    private final UserAccessService userAccessService;
 
-    public SuggestionsController(SuggestionService suggestionService) {
+    public SuggestionsController(SuggestionService suggestionService, UserAccessService userAccessService) {
         this.suggestionService = suggestionService;
+        this.userAccessService = userAccessService;
     }
 
     @GetMapping("/search")
@@ -48,9 +54,10 @@ public class SuggestionsController {
                     )
             )
     })
-    public ResponseEntity<?> getSearchSuggestions() {
+    public ResponseEntity<?> getSearchSuggestions(@AuthenticationPrincipal User user) {
         try {
-            List<SearchSuggestion> searchSuggestions = suggestionService.getSearchSuggestions(SUGGESTION_LIMIT);
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            List<SearchSuggestion> searchSuggestions = suggestionService.getSearchSuggestions(SUGGESTION_LIMIT, access);
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(searchSuggestions);
@@ -79,9 +86,10 @@ public class SuggestionsController {
                     )
             )
     })
-    public ResponseEntity<?> getSuggestions() {
+    public ResponseEntity<?> getSuggestions(@AuthenticationPrincipal User user) {
         try {
-            List<Suggestion> searchSuggestions = suggestionService.getSuggestions(SUGGESTION_LIMIT);
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            List<Suggestion> searchSuggestions = suggestionService.getSuggestions(SUGGESTION_LIMIT, access);
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(searchSuggestions);
