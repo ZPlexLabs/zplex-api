@@ -73,6 +73,13 @@ token (the one in the request body if provided, otherwise all of the user's).
 invalidating all outstanding sessions. `POST /api/auth/refresh` rejects a refresh token whose
 version no longer matches the user's current version (`401`).
 
+## Stream grants (`/api/stream`)
+
+`GET /api/stream/grant/{fileId}` requires the `STREAM` capability. The API resolves the file
+to its movie or episode, applies the caller's library, parental-rating, and blacklist rules,
+then returns a signed HS256 grant valid for approximately two minutes. The grant contains the
+file id and caller username and is intended for the stream worker; it is not an API access token.
+
 ## 📺 Watch state (`/api/me`)
 
 Per-user, server-side watch state is keyed only by the username from the authenticated JWT

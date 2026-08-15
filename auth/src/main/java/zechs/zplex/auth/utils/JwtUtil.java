@@ -28,6 +28,7 @@ public class JwtUtil {
     private static final Logger logger = Logger.getLogger(JwtUtil.class.getName());
     private static final int ACCESS_TOKEN_VALIDATE_IN_HOURS = 24; // 1 day
     private static final int REFRESH_TOKEN_VALIDATE_IN_HOURS = 24 * 365; // 1 year
+    private static final int STREAM_GRANT_VALIDATE_IN_MINUTES = 2;
     private static final String TOKEN_ISSUER = "zplex-api";
     private static final int MIN_KEY_LENGTH = 32;
     private final SecretKey jwtKey;
@@ -129,6 +130,20 @@ public class JwtUtil {
 
     public Duration accessTokenValidity() {
         return Duration.ofHours(ACCESS_TOKEN_VALIDATE_IN_HOURS);
+    }
+
+    public String generateStreamGrant(User user, String fileId) {
+        long currentTimeMillis = System.currentTimeMillis();
+        return Jwts.builder()
+                .claim("jti", UUID.randomUUID().toString())
+                .claim("username", user.getUsername())
+                .claim("fileId", fileId)
+                .claim("grantType", "stream")
+                .issuer(TOKEN_ISSUER)
+                .issuedAt(new Date(currentTimeMillis))
+                .expiration(new Date(currentTimeMillis + Duration.ofMinutes(STREAM_GRANT_VALIDATE_IN_MINUTES).toMillis()))
+                .signWith(jwtKey, Jwts.SIG.HS256)
+                .compact();
     }
 
     private String createToken(User user, int duration, TokenType tokenType) {

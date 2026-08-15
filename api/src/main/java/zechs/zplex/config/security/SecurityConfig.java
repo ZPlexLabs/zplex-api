@@ -50,6 +50,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout", "/api/auth/logout/all")
                         .authenticated()
 
+                        // Short-lived stream grants
+                        .requestMatchers(HttpMethod.GET, "/api/stream/grant/**")
+                        .hasAuthority(Capabilities.STREAM.getIdAsString())
+
                         // Admin endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup")
                         .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())
