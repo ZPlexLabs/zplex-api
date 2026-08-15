@@ -60,7 +60,7 @@ public class UserService {
             admin.setUsername("admin");
             admin.setFirstName("Administrator");
             admin.setLastName("");
-            admin.setPassword(PasswordUtil.hashPassword(envAdminPassword));
+            admin.setPassword(PasswordUtil.encode(envAdminPassword));
             admin.setCapabilities(new int[]{1, 2, 3, 4, 5});
             admin.setAdult(true);
             admin.setAllowedLibraries(Library.getAllIds());
@@ -86,14 +86,15 @@ public class UserService {
                     .toArray();
 
             boolean updateCapabilities = !Arrays.equals(admin.getCapabilities(), supportedCapabilityIds);
-            boolean updatePassword = !admin.getPassword().equals(PasswordUtil.hashPassword(envAdminPassword));
+            boolean updatePassword = !PasswordUtil.matches(envAdminPassword, admin.getPassword())
+                    || PasswordUtil.needsRehash(admin.getPassword());
             boolean updateAccess = !Arrays.equals(admin.getAllowedLibraries(), Library.getAllIds())
                     || admin.getMaxRatingRank() != Integer.MAX_VALUE
                     || !admin.isAllowUnrated();
 
             if (updateCapabilities || updatePassword || updateAccess) {
                 if (updateCapabilities) admin.setCapabilities(supportedCapabilityIds);
-                if (updatePassword) admin.setPassword(PasswordUtil.hashPassword(envAdminPassword));
+                if (updatePassword) admin.setPassword(PasswordUtil.encode(envAdminPassword));
                 if (updateAccess) {
                     admin.setAllowedLibraries(Library.getAllIds());
                     admin.setMaxRatingRank(Integer.MAX_VALUE); // no rating ceiling
@@ -127,6 +128,14 @@ public class UserService {
         }
     }
 
+    // Re-hashes a verified legacy password to BCrypt so old SHA-256 hashes are phased out on login.
+    @Transactional
+    public void upgradePasswordHash(User user, String rawPassword) {
+        user.setPassword(PasswordUtil.encode(rawPassword));
+        userRepository.save(user);
+        logger.log(Level.INFO, "Upgraded password hash to BCrypt for user " + user.getUsername());
+    }
+
     @Transactional
     public void createNewUser(SignupRequest signupRequest) throws UsernameConflict {
         try {
@@ -139,7 +148,7 @@ public class UserService {
             newUser.setUsername(signupRequest.username());
             newUser.setFirstName(signupRequest.firstName());
             newUser.setLastName(signupRequest.lastName());
-            newUser.setPassword(PasswordUtil.hashPassword(signupRequest.password()));
+            newUser.setPassword(PasswordUtil.encode(signupRequest.password()));
             newUser.setCapabilities(new int[]{});
             newUser.setAdult(false);
             newUser.setAllowedLibraries(new int[]{}); // no library access until admin grants

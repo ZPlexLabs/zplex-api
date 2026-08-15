@@ -70,7 +70,10 @@ public class AuthController {
                 throw new UserDoesNotExist(loginRequest.username());
             }
 
-            if (user.getPassword().equals(PasswordUtil.hashPassword(loginRequest.password()))) {
+            if (PasswordUtil.matches(loginRequest.password(), user.getPassword())) {
+                if (PasswordUtil.needsRehash(user.getPassword())) {
+                    userService.upgradePasswordHash(user, loginRequest.password());
+                }
                 return ResponseEntity
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)

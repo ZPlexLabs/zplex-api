@@ -9,6 +9,7 @@ It provides authentication, user management, and integrations with external serv
 ## 🚀 Features
 
 - Secure authentication with JWT
+- BCrypt password hashing (legacy SHA-256 hashes re-hashed on next login)
 - Admin user bootstrap
 - Per-user access control (libraries, rating ceiling, per-title blacklist)
 - PostgreSQL persistence
