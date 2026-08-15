@@ -23,6 +23,7 @@ import zechs.zplex.common.model.ErrorResponse;
 import zechs.zplex.common.model.Library;
 import zechs.zplex.common.model.PaginatedResponse;
 import zechs.zplex.common.model.UserAccess;
+import zechs.zplex.config.service.ParentalRatingNormalizer;
 import zechs.zplex.filter_parser.FilterExtractor;
 import zechs.zplex.filter_parser.model.Filter;
 import zechs.zplex.media.model.MediaListItem;
@@ -46,11 +47,14 @@ public class MovieController {
     private static final int LATEST_MOVIES_COUNT = 10;
     private final MoviesRepository moviesRepository;
     private final UserAccessService userAccessService;
+    private final ParentalRatingNormalizer ratingNormalizer;
 
     @Autowired
-    public MovieController(MoviesRepository moviesRepository, UserAccessService userAccessService) {
+    public MovieController(MoviesRepository moviesRepository, UserAccessService userAccessService,
+                          ParentalRatingNormalizer ratingNormalizer) {
         this.moviesRepository = moviesRepository;
         this.userAccessService = userAccessService;
+        this.ratingNormalizer = ratingNormalizer;
     }
 
     @GetMapping("/latest")
@@ -181,9 +185,19 @@ public class MovieController {
                     )
             )
     })
-    public ResponseEntity<?> getMovieById(@PathVariable("tmdbId") Integer tmdbId) {
+    public ResponseEntity<?> getMovieById(@PathVariable("tmdbId") Integer tmdbId,
+                                          @AuthenticationPrincipal User user) {
         try {
             MovieDetails movie = moviesRepository.getMovieById(tmdbId);
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            if (!access.isLibraryAllowed(Library.MOVIES.getId())
+                    || access.isBlacklisted(zechs.zplex.common.model.MediaType.MOVIE, tmdbId)
+                    || !access.isRatingAllowed(ratingNormalizer.rankOf(movie.parentalRating()))) {
+                LOGGER.log(Level.WARNING, "Access denied to movie id " + tmdbId + " for user " + user.getUsername());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(new ErrorResponse("Movie with id " + tmdbId + " does not exists"));
+            }
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(movie);

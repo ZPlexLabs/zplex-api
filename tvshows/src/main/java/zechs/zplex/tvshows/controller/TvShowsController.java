@@ -24,6 +24,7 @@ import zechs.zplex.common.model.ErrorResponse;
 import zechs.zplex.common.model.Library;
 import zechs.zplex.common.model.PaginatedResponse;
 import zechs.zplex.common.model.UserAccess;
+import zechs.zplex.config.service.ParentalRatingNormalizer;
 import zechs.zplex.filter_parser.FilterExtractor;
 import zechs.zplex.filter_parser.model.Filter;
 import zechs.zplex.media.model.MediaListItem;
@@ -49,11 +50,14 @@ public class TvShowsController {
     private static final int LATEST_SHOWS_COUNT = 10;
     private final TvShowsRepository tvShowsRepository;
     private final UserAccessService userAccessService;
+    private final ParentalRatingNormalizer ratingNormalizer;
 
     @Autowired
-    public TvShowsController(TvShowsRepository tvShowsRepository, UserAccessService userAccessService) {
+    public TvShowsController(TvShowsRepository tvShowsRepository, UserAccessService userAccessService,
+                            ParentalRatingNormalizer ratingNormalizer) {
         this.tvShowsRepository = tvShowsRepository;
         this.userAccessService = userAccessService;
+        this.ratingNormalizer = ratingNormalizer;
     }
 
     @GetMapping("/latest")
@@ -184,9 +188,15 @@ public class TvShowsController {
                     )
             )
     })
-    public ResponseEntity<?> getShowById(@PathVariable("tmdbId") Integer tmdbId) {
+    public ResponseEntity<?> getShowById(@PathVariable("tmdbId") Integer tmdbId,
+                                         @AuthenticationPrincipal User user) {
         try {
             TvShowDetails show = tvShowsRepository.getShowById(tmdbId);
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            if (isShowHidden(tmdbId, ratingNormalizer.rankOf(show.parentalRating()), access)) {
+                LOGGER.log(Level.WARNING, "Access denied to TV Show id " + tmdbId + " for user " + user.getUsername());
+                return notFound(tmdbId);
+            }
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(show);
@@ -228,8 +238,14 @@ public class TvShowsController {
                     )
             )
     })
-    public ResponseEntity<?> getSeasonsByShowId(@PathVariable("tmdbId") Integer tmdbId) {
+    public ResponseEntity<?> getSeasonsByShowId(@PathVariable("tmdbId") Integer tmdbId,
+                                                @AuthenticationPrincipal User user) {
         try {
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            if (isShowHidden(tmdbId, ratingNormalizer.rankOf(tvShowsRepository.getShowRating(tmdbId)), access)) {
+                LOGGER.log(Level.WARNING, "Access denied to TV Show id " + tmdbId + " for user " + user.getUsername());
+                return notFound(tmdbId);
+            }
             List<Season> seasons = tvShowsRepository.getSeasonsByShowId(tmdbId);
             if (seasons == null || seasons.isEmpty()) {
                 LOGGER.log(Level.WARNING, "No seasons found for TV Show with id " + tmdbId);
@@ -279,8 +295,14 @@ public class TvShowsController {
             )
     })
     public ResponseEntity<?> getEpisodesBySeasonId(@PathVariable("tmdbId") Integer tmdbId,
-                                                   @PathVariable("seasonId") Integer seasonId) {
+                                                   @PathVariable("seasonId") Integer seasonId,
+                                                   @AuthenticationPrincipal User user) {
         try {
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            if (isShowHidden(tmdbId, ratingNormalizer.rankOf(tvShowsRepository.getShowRating(tmdbId)), access)) {
+                LOGGER.log(Level.WARNING, "Access denied to TV Show id " + tmdbId + " for user " + user.getUsername());
+                return notFound(tmdbId);
+            }
             List<Episode> episodes = tvShowsRepository.getEpisodesBySeasonId(seasonId);
             if (episodes == null || episodes.isEmpty()) {
                 LOGGER.log(Level.WARNING, "No episodes found for Season with id " + seasonId);
@@ -302,6 +324,18 @@ public class TvShowsController {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    private boolean isShowHidden(Integer tmdbId, Integer ratingRank, UserAccess access) {
+        return !access.isLibraryAllowed(Library.SHOWS.getId())
+                || access.isBlacklisted(zechs.zplex.common.model.MediaType.SHOW, tmdbId)
+                || !access.isRatingAllowed(ratingRank);
+    }
+
+    private ResponseEntity<?> notFound(Integer tmdbId) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse("TV Show with id " + tmdbId + " does not exists"));
     }
 
 

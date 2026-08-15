@@ -36,11 +36,14 @@ Library ids: `1 = MOVIES`, `2 = SHOWS`. Rating ranks are served by `GET /api/con
 `maxRatingRank` (NULL rating governed by `allowUnrated`), minus blacklisted titles.
 
 This is enforced on the browse lists `GET /api/movie` and `GET /api/tvshows`, the
-recently-added lists `GET /api/movie/latest` and `GET /api/tvshows/latest`, and the daily
-suggestions `GET /api/suggestion` and `GET /api/suggestion/search`: a disallowed library
-returns an empty response, and over-rated or blacklisted titles are dropped. Suggestion
-responses are cached per user (cache key includes an access fingerprint) so access
-changes take effect without leaking restricted titles.
+recently-added lists `GET /api/movie/latest` and `GET /api/tvshows/latest`, the daily
+suggestions `GET /api/suggestion` and `GET /api/suggestion/search`, and the detail
+endpoints `GET /api/movie/{id}`, `GET /api/tvshows/{id}` and its children
+(`/seasons`, `/seasons/{seasonId}`): a disallowed library returns an empty response, and
+over-rated or blacklisted titles are dropped. Detail endpoints return `404` (indistinguishable
+from a missing title) when the title is denied or blacklisted. Suggestion responses are cached
+per user (cache key includes an access fingerprint) so access changes take effect without
+leaking restricted titles.
 
 ---
 

@@ -85,6 +85,12 @@ public class TvShowsRepository extends MediaRepository {
         return jdbcTemplate.queryForObject(sql, new TvShowDetailsMapper(), tmdbId);
     }
 
+    // Lightweight rating lookup for access checks on child endpoints; throws EmptyResultDataAccessException if the show is missing.
+    public String getShowRating(Integer tmdbId) {
+        String sql = "SELECT parental_rating FROM shows WHERE id = ? LIMIT 1";
+        return jdbcTemplate.queryForObject(sql, String.class, tmdbId);
+    }
+
 
     public List<Season> getSeasonsByShowId(Integer tmdbId) {
         String sql = """

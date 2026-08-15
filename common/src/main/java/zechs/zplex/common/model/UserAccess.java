@@ -52,6 +52,14 @@ public class UserAccess {
         return ids != null && ids.contains(tmdbId);
     }
 
+    // rank == null means the title carries no maturity level (governed by allowUnrated).
+    public boolean isRatingAllowed(Integer rank) {
+        if (rank == null) {
+            return allowUnrated;
+        }
+        return rank <= maxRatingRank;
+    }
+
     // Deterministic identity of this effective access; used as a per-user cache key so entries refresh when access changes.
     public String accessKey() {
         int[] libraries = allowedLibraries.clone();
