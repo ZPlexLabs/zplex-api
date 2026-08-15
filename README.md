@@ -13,7 +13,7 @@ It provides authentication, user management, and integrations with external serv
 - Valkey/Redis brute-force rate-limiter on `/api/auth/login`
 - Admin user bootstrap
 - Per-user access control (libraries, rating ceiling, per-title blacklist)
-- Server-side watch state (`watch_progress`, `watchlist`, `played`), keyed by username
+- Server-side watch state (`watch_progress`, `watchlist`, `played`, `playlist`), keyed by username
 - PostgreSQL persistence
 - Redis caching
 - Configurable via environment variables
@@ -78,6 +78,21 @@ Per-user, server-side watch state keyed by the JWT username (module `userdata`):
 | `GET /api/me/played` | `PlayedResponse[]` | Played titles, newest first |
 | `POST /api/me/played` | `{ mediaType, tmdbId, seasonNumber?, episodeNumber? }` | Mark a title as played (idempotent) |
 | `DELETE /api/me/played/{mediaType}/{tmdbId}?seasonNumber=&episodeNumber=` | — | Unmark a title as played |
+
+### Playlists (`/api/me/playlists`)
+
+User-owned, ordered playlists (tables `playlist`, `playlist_item`), all scoped to the caller:
+
+| Endpoint | Body / Response | Description |
+|----------|-----------------|-------------|
+| `GET /api/me/playlists` | `PlaylistResponse[]` | List playlists, newest-updated first |
+| `POST /api/me/playlists` | `{ name }` → `PlaylistResponse` | Create a playlist (`201`) |
+| `GET /api/me/playlists/{playlistId}` | `PlaylistDetailResponse` | Playlist with ordered items (`404` if not theirs) |
+| `PUT /api/me/playlists/{playlistId}` | `{ name }` | Rename (`204`/`404`) |
+| `DELETE /api/me/playlists/{playlistId}` | — | Delete playlist + its items (`204`/`404`) |
+| `POST /api/me/playlists/{playlistId}/items` | `{ mediaType, tmdbId }` | Append a title (idempotent; `204`/`404`) |
+| `DELETE /api/me/playlists/{playlistId}/items/{itemId}` | — | Remove a title (`204`/`404`) |
+| `PUT /api/me/playlists/{playlistId}/items/order` | `{ itemIds: [...] }` | Reorder items by given id order (`204`/`404`) |
 
 > All `/api/me/**` endpoints require the `VIEW` capability (enforced in `SecurityConfig`).
 
