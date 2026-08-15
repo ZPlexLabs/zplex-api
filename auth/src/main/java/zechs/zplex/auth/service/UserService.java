@@ -6,14 +6,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import zechs.zplex.auth.exception.*;
 import zechs.zplex.auth.model.User;
+import zechs.zplex.auth.model.UserBlacklist;
+import zechs.zplex.auth.model.UserBlacklistId;
+import zechs.zplex.auth.model.api.BlacklistEntry;
 import zechs.zplex.auth.model.api.SignupRequest;
+import zechs.zplex.auth.model.api.UserSummaryResponse;
+import zechs.zplex.auth.repository.UserBlacklistRepository;
 import zechs.zplex.auth.repository.UserRepository;
 import zechs.zplex.auth.utils.PasswordUtil;
 import zechs.zplex.common.capability.Capabilities;
 import zechs.zplex.common.capability.Capability;
 import zechs.zplex.common.model.Library;
+import zechs.zplex.common.model.MediaType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,10 +32,12 @@ public class UserService {
 
     private static final Logger logger = Logger.getLogger(UserService.class.getName());
     private final UserRepository userRepository;
+    private final UserBlacklistRepository userBlacklistRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, UserBlacklistRepository userBlacklistRepository) {
         this.userRepository = userRepository;
+        this.userBlacklistRepository = userBlacklistRepository;
     }
 
     @Transactional
@@ -184,5 +194,57 @@ public class UserService {
             logger.log(Level.SEVERE, "Failed to delete user " + username + ": " + e.getMessage(), e);
             throw new UserUpdateFailed("Failed to delete user " + username + ": " + e.getMessage());
         }
+    }
+
+    public List<UserSummaryResponse> listUsers() {
+        List<UserSummaryResponse> summaries = new ArrayList<>();
+        for (User user : userRepository.findAll()) {
+            summaries.add(toSummary(user));
+        }
+        return summaries;
+    }
+
+    private UserSummaryResponse toSummary(User user) {
+        List<BlacklistEntry> blacklist = userBlacklistRepository.findByIdUsername(user.getUsername()).stream()
+                .map(entry -> new BlacklistEntry(entry.getId().getMediaType(), entry.getId().getTmdbId()))
+                .collect(Collectors.toList());
+        return new UserSummaryResponse(
+                user.getUsername(), user.getFirstName(), user.getLastName(),
+                user.getCapabilities(), user.getAdult(), user.getAllowedLibraries(),
+                user.getMaxRatingRank(), user.isAllowUnrated(), blacklist);
+    }
+
+    @Transactional
+    public void updateUserAccess(String username, int[] allowedLibraries, int maxRatingRank, boolean allowUnrated)
+            throws UserDoesNotExist, InvalidAccessRequest {
+        validateLibraries(allowedLibraries);
+        User user = getUserByUsername(username);
+        user.setAllowedLibraries(allowedLibraries);
+        user.setMaxRatingRank(maxRatingRank);
+        user.setAllowUnrated(allowUnrated);
+        userRepository.save(user);
+        logger.log(Level.INFO, "Updated access for user: " + username);
+    }
+
+    private void validateLibraries(int[] allowedLibraries) throws InvalidAccessRequest {
+        for (int id : allowedLibraries) {
+            if (Library.getById(id) == null) {
+                throw new InvalidAccessRequest("Unknown library id: " + id);
+            }
+        }
+    }
+
+    @Transactional
+    public void addToBlacklist(String username, MediaType mediaType, int tmdbId) throws UserDoesNotExist {
+        getUserByUsername(username);
+        userBlacklistRepository.save(new UserBlacklist(username, mediaType, tmdbId));
+        logger.log(Level.INFO, "Blacklisted " + mediaType + " " + tmdbId + " for user: " + username);
+    }
+
+    @Transactional
+    public void removeFromBlacklist(String username, MediaType mediaType, int tmdbId) throws UserDoesNotExist {
+        getUserByUsername(username);
+        userBlacklistRepository.deleteById(new UserBlacklistId(username, mediaType, tmdbId));
+        logger.log(Level.INFO, "Removed blacklist " + mediaType + " " + tmdbId + " for user: " + username);
     }
 }

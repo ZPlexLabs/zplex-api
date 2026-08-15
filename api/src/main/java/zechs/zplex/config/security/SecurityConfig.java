@@ -41,6 +41,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/auth/admin/users/{username}/capabilities")
                         .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())
 
+                        .requestMatchers(HttpMethod.GET, "/api/auth/admin/users")
+                        .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())
+
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/admin/users/{username}/access")
+                        .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())
+
+                        .requestMatchers(HttpMethod.POST, "/api/auth/admin/users/{username}/blacklist")
+                        .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/auth/admin/users/{username}/blacklist/{mediaType}/{tmdbId}")
+                        .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())
+
                         .requestMatchers(HttpMethod.DELETE, "/api/auth/admin/users/{username}")
                         .hasAuthority(Capabilities.DELETE_USERS.getIdAsString())
 

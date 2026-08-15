@@ -10,9 +10,30 @@ It provides authentication, user management, and integrations with external serv
 
 - Secure authentication with JWT
 - Admin user bootstrap
+- Per-user access control (libraries, rating ceiling, per-title blacklist)
 - PostgreSQL persistence
 - Redis caching
 - Configurable via environment variables
+
+---
+
+## 🔐 Admin user management
+
+Endpoints under `/api/auth/admin/**` require the `UPDATE_USERS_CAPABILITIES` capability
+(`DELETE /users/{username}` requires `DELETE_USERS`):
+
+| Method & path | Body | Purpose |
+|---------------|------|---------|
+| `GET /api/auth/admin/users` | — | List users with capabilities, library/rating access, and blacklist |
+| `PUT /api/auth/admin/users/{username}/capabilities` | `{ capabilities: int[] }` | Set global capabilities |
+| `PUT /api/auth/admin/users/{username}/access` | `{ allowedLibraries: int[], maxRatingRank: int, allowUnrated: bool }` | Set library scope + rating ceiling |
+| `POST /api/auth/admin/users/{username}/blacklist` | `{ mediaType: SHOW\|MOVIE, tmdbId: int }` | Hide a specific title from the user |
+| `DELETE /api/auth/admin/users/{username}/blacklist/{mediaType}/{tmdbId}` | — | Remove a blacklist entry |
+| `DELETE /api/auth/admin/users/{username}` | — | Delete a user (admin account protected) |
+
+Library ids: `1 = MOVIES`, `2 = SHOWS`. Rating ranks are served by `GET /api/config`
+(`ratingRanks`). Effective visibility = within `allowedLibraries` AND rating rank ≤
+`maxRatingRank` (NULL rating governed by `allowUnrated`), minus blacklisted titles.
 
 ---
 

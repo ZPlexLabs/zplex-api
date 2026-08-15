@@ -192,6 +192,123 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/admin/users")
+    @Operation(summary = "List all users with capabilities and access")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Users listed"),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> listUsers() {
+        try {
+            return ResponseEntity.ok(userService.listUsers());
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during listing users", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/admin/users/{username}/access")
+    @Operation(summary = "Update user library and rating access")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Access updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid access request"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> updateAccess(@PathVariable("username") String username,
+                                          @Valid @RequestBody UserAccessRequest accessRequest) {
+        try {
+            userService.updateUserAccess(username, accessRequest.allowedLibraries(),
+                    accessRequest.maxRatingRank(), accessRequest.allowUnrated());
+            LOGGER.info("Access updated for username: " + username);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } catch (InvalidAccessRequest invalid) {
+            LOGGER.warning("InvalidAccessRequest for username " + username + ": " + invalid.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(invalid.getMessage()));
+        } catch (UserDoesNotExist notExist) {
+            LOGGER.warning("UserDoesNotExist exception for username: " + username);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during updating access", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/admin/users/{username}/blacklist")
+    @Operation(summary = "Add a title to a user's blacklist")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Title blacklisted"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> addBlacklist(@PathVariable("username") String username,
+                                          @Valid @RequestBody BlacklistRequest blacklistRequest) {
+        try {
+            userService.addToBlacklist(username, blacklistRequest.mediaType(), blacklistRequest.tmdbId());
+            LOGGER.info("Title blacklisted for username: " + username);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (UserDoesNotExist notExist) {
+            LOGGER.warning("UserDoesNotExist exception for username: " + username);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during blacklisting title", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/admin/users/{username}/blacklist/{mediaType}/{tmdbId}")
+    @Operation(summary = "Remove a title from a user's blacklist")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Title removed from blacklist"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> removeBlacklist(@PathVariable("username") String username,
+                                             @PathVariable("mediaType") zechs.zplex.common.model.MediaType mediaType,
+                                             @PathVariable("tmdbId") int tmdbId) {
+        try {
+            userService.removeFromBlacklist(username, mediaType, tmdbId);
+            LOGGER.info("Title removed from blacklist for username: " + username);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } catch (UserDoesNotExist notExist) {
+            LOGGER.warning("UserDoesNotExist exception for username: " + username);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception during removing blacklist title", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     @PostMapping("/refresh")
     @Operation(
             summary = "Refresh access token",
