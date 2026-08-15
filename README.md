@@ -128,23 +128,29 @@ User-owned, ordered playlists (tables `playlist`, `playlist_item`), all scoped t
 
 ## ⚙️ Configuration
 
-The application is configured through environment variables and Spring Boot properties.  
-Below are the required parameters:
+The application is configured through environment variables and Spring Boot properties.
+The list below reflects what the runtime currently requires.
 
-### 🔑 Authentication & Security
+### ✅ Required environment variables
 
-| Variable         | Description                                | Example                |
-|------------------|--------------------------------------------|------------------------|
-| `ADMIN_PASSWORD` | Password for the default admin account.    | `admin123`             |
-| `SECRET_KEY`     | 256-bit secret key for signing JWT tokens. | `supersecretkey123...` |
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `ADMIN_PASSWORD` | Password for bootstrap admin provisioning at startup. | `admin123` |
+| `SECRET_KEY` | HS256 signing key (min 32 chars) used for access/refresh/stream-grant JWTs. | `supersecretkey123...` |
+| `ZPLEX_DATABASE_URL` | Database URL without `jdbc:` prefix. | `postgresql://localhost:5432/zplex` |
+| `ZPLEX_DATABASE_USERNAME` | Database username. | `zplex_user` |
+| `ZPLEX_DATABASE_PASSWORD` | Database password. | `mypassword` |
+| `REDIS_HOST` | Redis/Valkey hostname. | `redis` |
+| `REDIS_PORT` | Redis/Valkey port. | `6379` |
+| `REDIS_USERNAME` | Redis/Valkey username. | `default` |
+| `REDIS_PASSWORD` | Redis/Valkey password. | `mypassword` |
 
-### 🗄 Database (PostgreSQL)
+### ⚙️ Optional environment variables
 
-| Variable                  | Description                          | Example                             |
-|---------------------------|--------------------------------------|-------------------------------------|
-| `ZPLEX_DATABASE_URL`      | Database URL without `jdbc:` prefix. | `postgresql://localhost:5432/zplex` |
-| `ZPLEX_DATABASE_USERNAME` | Database username.                   | `zplex_user`                        |
-| `ZPLEX_DATABASE_PASSWORD` | Database password.                   | `mypassword`                        |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ZPLEX_STREAM_HOST` | Public URL of deployed `zplex-stream` returned by `GET /api/config`. | Empty string |
+| `ZPLEX_CORS_ALLOWED_ORIGINS` | Comma-separated browser origins for CORS allow-list. | Deny all browser origins |
 
 **Spring Boot Properties (auto-configured in `application.properties`):**
 
@@ -160,20 +166,9 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
 ### 📂 Streaming from Google Drive
 
-Refer to [zplex-stream](https://github.com/ZPlexLabs/zplex-stream)
-
-| Variable            | Description                               | Example                               |
-|---------------------|-------------------------------------------|---------------------------------------|
-| `ZPLEX_STREAM_HOST` | Public URL of your deployed zplex-stream. | `https://zplex-stream.**.workers.dev` |
-
-### ⚡ Redis Cache
-
-| Variable         | Description     | Example      |
-|------------------|-----------------|--------------|
-| `REDIS_HOST`     | Redis hostname. | `redis`      |
-| `REDIS_PORT`     | Redis port.     | `6379`       |
-| `REDIS_USERNAME` | Redis username. | `default`    |
-| `REDIS_PASSWORD` | Redis password. | `mypassword` |
+Refer to [zplex-stream](https://github.com/ZPlexLabs/zplex-stream). The API itself
+only needs `ZPLEX_STREAM_HOST` if clients should receive a non-empty streaming host
+from `GET /api/config`.
 
 ---
 
@@ -200,7 +195,10 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_USERNAME=default
 REDIS_PASSWORD=mypassword
+# Optional (recommended when stream worker is deployed)
 ZPLEX_STREAM_HOST=https://zplex-stream.**.workers.dev
+# Optional (browser clients only)
+ZPLEX_CORS_ALLOWED_ORIGINS=https://app.example.com
 ```
 
 ### 3. Build & run
