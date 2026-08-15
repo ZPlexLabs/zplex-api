@@ -57,6 +57,10 @@ counter; a successful login resets it. Once the limit is exceeded the endpoint r
 with a `Retry-After` header. Tunable via `zplex.login.rate-limit.max-attempts` (default `10`)
 and `zplex.login.rate-limit.window-seconds` (default `900`).
 
+CORS is denied by default. Cross-origin browser clients must be allow-listed via
+`zplex.cors.allowed-origins` (comma-separated, e.g. `ZPLEX_CORS_ALLOWED_ORIGINS=https://app.example.com`);
+native clients are unaffected.
+
 ---
 
 ## 📦 Requirements
