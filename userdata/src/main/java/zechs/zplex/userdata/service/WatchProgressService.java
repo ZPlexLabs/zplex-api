@@ -16,9 +16,11 @@ public class WatchProgressService {
     private static final double COMPLETION_THRESHOLD = 0.90;
 
     private final WatchProgressRepository watchProgressRepository;
+    private final PlayedService playedService;
 
-    public WatchProgressService(WatchProgressRepository watchProgressRepository) {
+    public WatchProgressService(WatchProgressRepository watchProgressRepository, PlayedService playedService) {
         this.watchProgressRepository = watchProgressRepository;
+        this.playedService = playedService;
     }
 
     @Transactional
@@ -38,6 +40,10 @@ public class WatchProgressService {
         progress.setDurationMs(request.durationMs());
         progress.setUpdatedAt(Instant.now());
         watchProgressRepository.save(progress);
+
+        if (!isInProgress(progress)) {
+            playedService.markPlayed(username, request.mediaType(), request.tmdbId(), season, episode);
+        }
     }
 
     public List<ContinueWatchingItem> getContinueWatching(String username) {
