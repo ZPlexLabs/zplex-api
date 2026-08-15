@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import zechs.zplex.auth.exception.*;
 import zechs.zplex.auth.model.RefreshToken;
 import zechs.zplex.auth.model.User;
 import zechs.zplex.auth.model.api.*;
+import zechs.zplex.auth.service.LoginRateLimiter;
 import zechs.zplex.auth.service.TokenService;
 import zechs.zplex.auth.service.UserService;
 import zechs.zplex.auth.utils.PasswordUtil;
@@ -33,10 +36,12 @@ public class AuthController {
 
     private final UserService userService;
     private final TokenService tokenService;
+    private final LoginRateLimiter loginRateLimiter;
 
-    public AuthController(UserService userService, TokenService tokenService) {
+    public AuthController(UserService userService, TokenService tokenService, LoginRateLimiter loginRateLimiter) {
         this.userService = userService;
         this.tokenService = tokenService;
+        this.loginRateLimiter = loginRateLimiter;
     }
 
     @PostMapping("/login")
@@ -55,6 +60,12 @@ public class AuthController {
                     )
             ),
             @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "429", description = "Too many login attempts",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
             @ApiResponse(responseCode = "500", description = "Internal server error",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -62,7 +73,17 @@ public class AuthController {
                     )
             )
     })
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        String clientId = resolveClientIp(request);
+        if (!loginRateLimiter.isAllowed(clientId)) {
+            long retryAfter = loginRateLimiter.retryAfterSeconds(clientId);
+            LOGGER.warning("Login rate limit exceeded for client: " + clientId);
+            return ResponseEntity
+                    .status(HttpStatus.TOO_MANY_REQUESTS)
+                    .header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfter))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse("Too many login attempts. Try again later."));
+        }
         try {
             User user = userService.getUserByUsername(loginRequest.username());
             if (user == null) {
@@ -74,11 +95,13 @@ public class AuthController {
                 if (PasswordUtil.needsRehash(user.getPassword())) {
                     userService.upgradePasswordHash(user, loginRequest.password());
                 }
+                loginRateLimiter.reset(clientId);
                 return ResponseEntity
                         .status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(tokenService.createRefreshToken(user));
             } else {
+                loginRateLimiter.recordFailure(clientId);
                 LOGGER.warning("Invalid password attempt for username: " + loginRequest.username());
                 return ResponseEntity
                         .status(HttpStatus.UNAUTHORIZED)
@@ -86,6 +109,7 @@ public class AuthController {
                         .body(new ErrorResponse("Invalid password"));
             }
         } catch (UserDoesNotExist notExist) {
+            loginRateLimiter.recordFailure(clientId);
             LOGGER.warning("UserDoesNotExist exception: " + notExist.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
@@ -388,6 +412,14 @@ public class AuthController {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
 }

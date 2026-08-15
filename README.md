@@ -10,6 +10,7 @@ It provides authentication, user management, and integrations with external serv
 
 - Secure authentication with JWT
 - BCrypt password hashing (legacy SHA-256 hashes re-hashed on next login)
+- Valkey/Redis brute-force rate-limiter on `/api/auth/login`
 - Admin user bootstrap
 - Per-user access control (libraries, rating ceiling, per-title blacklist)
 - PostgreSQL persistence
@@ -49,6 +50,12 @@ over-rated or blacklisted titles are dropped. Detail endpoints return `404` (ind
 from a missing title) when the title is denied or blacklisted. Suggestion responses are cached
 per user (cache key includes an access fingerprint) so access changes take effect without
 leaking restricted titles.
+
+`POST /api/auth/login` is protected by a Valkey/Redis fixed-window rate-limiter keyed by
+client IP (`X-Forwarded-For` first hop, else remote address). Failed attempts increment the
+counter; a successful login resets it. Once the limit is exceeded the endpoint returns `429`
+with a `Retry-After` header. Tunable via `zplex.login.rate-limit.max-attempts` (default `10`)
+and `zplex.login.rate-limit.window-seconds` (default `900`).
 
 ---
 
