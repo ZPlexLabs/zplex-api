@@ -41,6 +41,9 @@ public class User {
     @Column(name = "allow_unrated")
     private Boolean allowUnrated;
 
+    @Column(name = "token_version")
+    private Integer tokenVersion;
+
     public User() {
     }
 
@@ -135,6 +138,14 @@ public class User {
 
     public void setAllowUnrated(boolean allowUnrated) {
         this.allowUnrated = allowUnrated;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion == null ? 0 : tokenVersion;
+    }
+
+    public void setTokenVersion(int tokenVersion) {
+        this.tokenVersion = tokenVersion;
     }
 
     @Override

@@ -11,6 +11,7 @@ It provides authentication, user management, and integrations with external serv
 - Secure authentication with JWT
 - BCrypt password hashing (legacy SHA-256 hashes re-hashed on next login)
 - Valkey/Redis brute-force rate-limiter on `/api/auth/login`
+- Refresh-token revocation (per-user token version + Valkey access-jti deny-list; logout revokes)
 - Admin user bootstrap
 - Per-user access control (libraries, rating ceiling, per-title blacklist)
 - Server-side watch state (`watch_progress`, `watchlist`, `played`, `playlist`), keyed by username
@@ -61,6 +62,16 @@ and `zplex.login.rate-limit.window-seconds` (default `900`).
 CORS is denied by default. Cross-origin browser clients must be allow-listed via
 `zplex.cors.allowed-origins` (comma-separated, e.g. `ZPLEX_CORS_ALLOWED_ORIGINS=https://app.example.com`);
 native clients are unaffected.
+
+### Session revocation
+
+Refresh tokens are stored server-side (`refresh_tokens`) and carry a per-user token version.
+`POST /api/auth/logout` (authenticated) revokes the caller's current access token via a
+Valkey deny-list (`revoked-jti:{jti}`, TTL = remaining token life) and deletes its refresh
+token (the one in the request body if provided, otherwise all of the user's).
+`POST /api/auth/logout/all` bumps the user's token version, deleting every refresh token and
+invalidating all outstanding sessions. `POST /api/auth/refresh` rejects a refresh token whose
+version no longer matches the user's current version (`401`).
 
 ## 📺 Watch state (`/api/me`)
 

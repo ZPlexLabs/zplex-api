@@ -136,6 +136,15 @@ public class UserService {
         logger.log(Level.INFO, "Upgraded password hash to BCrypt for user " + user.getUsername());
     }
 
+    // Bumps the user's token version, invalidating every previously issued refresh token.
+    @Transactional
+    public int incrementTokenVersion(User user) {
+        int next = user.getTokenVersion() + 1;
+        user.setTokenVersion(next);
+        userRepository.save(user);
+        return next;
+    }
+
     @Transactional
     public void createNewUser(SignupRequest signupRequest) throws UsernameConflict {
         try {

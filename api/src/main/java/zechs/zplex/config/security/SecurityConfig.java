@@ -46,6 +46,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, Endpoints.AUTH)
                         .permitAll()
 
+                        // Logout (any authenticated user)
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout", "/api/auth/logout/all")
+                        .authenticated()
+
                         // Admin endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup")
                         .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())

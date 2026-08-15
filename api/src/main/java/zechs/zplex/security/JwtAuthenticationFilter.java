@@ -19,6 +19,7 @@ import zechs.zplex.auth.exception.JwtTokenNotValid;
 import zechs.zplex.auth.model.AuthenticatedUser;
 import zechs.zplex.auth.model.TokenType;
 import zechs.zplex.auth.model.User;
+import zechs.zplex.auth.service.TokenRevocationService;
 import zechs.zplex.auth.utils.JwtUtil;
 
 import java.io.IOException;
@@ -32,10 +33,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger logger = Logger.getLogger(JwtAuthenticationFilter.class.getName());
 
     private final JwtUtil jwtUtil;
+    private final TokenRevocationService tokenRevocationService;
 
     @Autowired
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, TokenRevocationService tokenRevocationService) {
         this.jwtUtil = jwtUtil;
+        this.tokenRevocationService = tokenRevocationService;
     }
 
     @Override
@@ -60,6 +63,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
             User user = authenticatedUser.user();
+
+            String jti = jwtUtil.extractJti(jwt);
+            if (tokenRevocationService.isAccessJtiRevoked(jti)) {
+                logger.log(Level.INFO, "Access token has been revoked");
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+
+            if (user != null) {
+                Integer cachedVersion = tokenRevocationService.getCachedTokenVersion(user.getUsername());
+                if (cachedVersion != null && cachedVersion != user.getTokenVersion()) {
+                    logger.log(Level.INFO, "Access token version is stale");
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
+            }
 
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

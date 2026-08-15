@@ -13,6 +13,7 @@ import zechs.zplex.auth.model.User;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -50,6 +51,8 @@ public class JwtUtil {
             user.setLastName(claims.get("lastName", String.class));
             user.setUsername(claims.get("username", String.class));
             user.setAdult(claims.get("isAdult", Boolean.class));
+            Integer tokenVersion = claims.get("tokenVersion", Integer.class);
+            user.setTokenVersion(tokenVersion == null ? 0 : tokenVersion);
             int[] capabilities = ((List<?>) claims.get("capabilities"))
                     .stream()
                     .mapToInt(o -> ((Number) o).intValue())
@@ -71,6 +74,11 @@ public class JwtUtil {
 
     public String extractJti(String token) throws JwtTokenNotValid {
         return extractClaim(token, claims -> claims.get("jti", String.class));
+    }
+
+    public int extractTokenVersion(String token) throws JwtTokenNotValid {
+        Integer version = extractClaim(token, claims -> claims.get("tokenVersion", Integer.class));
+        return version == null ? 0 : version;
     }
 
     private String extractIssuer(String token) throws JwtTokenNotValid {
@@ -119,6 +127,10 @@ public class JwtUtil {
         return createToken(user, ACCESS_TOKEN_VALIDATE_IN_HOURS, TokenType.ACCESS);
     }
 
+    public Duration accessTokenValidity() {
+        return Duration.ofHours(ACCESS_TOKEN_VALIDATE_IN_HOURS);
+    }
+
     private String createToken(User user, int duration, TokenType tokenType) {
         long currentTimeMillis = System.currentTimeMillis();
 
@@ -129,6 +141,7 @@ public class JwtUtil {
                 .claim("username", user.getUsername())
                 .claim("capabilities", user.getCapabilities())
                 .claim("isAdult", user.getAdult())
+                .claim("tokenVersion", user.getTokenVersion())
                 .claim("tokenType", tokenType.name().toLowerCase(Locale.ENGLISH))
                 .issuer(TOKEN_ISSUER)
                 .issuedAt(new Date(currentTimeMillis))

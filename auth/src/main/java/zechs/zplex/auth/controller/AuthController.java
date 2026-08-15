@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import zechs.zplex.auth.exception.*;
@@ -389,6 +390,12 @@ public class AuthController {
 
                 // generate new access token
                 User user = findToken.get().getUser();
+                if (!tokenService.isRefreshTokenVersionCurrent(requestRefreshToken, user)) {
+                    LOGGER.warning("Refresh token version stale for user: " + user.getUsername());
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(new ErrorResponse("Refresh token revoked. Please login again."));
+                }
                 LOGGER.info("Access token refreshed for user: " + user.getUsername());
                 return ResponseEntity
                         .status(HttpStatus.OK)
@@ -412,6 +419,46 @@ public class AuthController {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout the current device by revoking its access and refresh tokens.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Logged out"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated")
+    })
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal User user, HttpServletRequest request,
+                                       @RequestBody(required = false) TokenRefreshRequest body) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String refreshToken = body == null ? null : body.refreshToken();
+        tokenService.logout(user, extractBearerToken(request), refreshToken);
+        LOGGER.info("User logged out: " + user.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/logout/all")
+    @Operation(summary = "Logout every device by bumping the user's token version.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Logged out everywhere"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated")
+    })
+    public ResponseEntity<Void> logoutAll(@AuthenticationPrincipal User user, HttpServletRequest request) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        tokenService.logoutAll(user, extractBearerToken(request));
+        LOGGER.info("User logged out from all devices: " + user.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
+    private String extractBearerToken(HttpServletRequest request) {
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
     }
 
     private String resolveClientIp(HttpServletRequest request) {
