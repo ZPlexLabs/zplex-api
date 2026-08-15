@@ -17,6 +17,7 @@ import zechs.zplex.common.capability.Capability;
 import zechs.zplex.common.model.ErrorResponse;
 import zechs.zplex.config.model.ConfigResponse;
 import zechs.zplex.config.service.FilterConfigService;
+import zechs.zplex.config.service.ParentalRatingNormalizer;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,9 +28,11 @@ public class ConfigController {
 
     private static final Logger LOGGER = Logger.getLogger(ConfigController.class.getName());
     private final FilterConfigService configService;
+    private final ParentalRatingNormalizer ratingNormalizer;
 
-    public ConfigController(FilterConfigService configService) {
+    public ConfigController(FilterConfigService configService, ParentalRatingNormalizer ratingNormalizer) {
         this.configService = configService;
+        this.ratingNormalizer = ratingNormalizer;
     }
 
     @GetMapping("/capabilities")
@@ -86,6 +89,7 @@ public class ConfigController {
             config.setStreamingHost(System.getenv().getOrDefault("ZPLEX_STREAM_HOST", ""));
             config.addFilter(configService.getFilterConfig(zechs.zplex.common.model.MediaType.SHOW));
             config.addFilter(configService.getFilterConfig(zechs.zplex.common.model.MediaType.MOVIE));
+            config.setRatingRanks(ratingNormalizer.getCatalog());
 
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)

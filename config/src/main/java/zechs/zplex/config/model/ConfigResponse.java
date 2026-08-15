@@ -6,6 +6,7 @@ import java.util.List;
 public class ConfigResponse {
     private String streamingHost;
     private List<FilterConfig> filters;
+    private List<RatingRankInfo> ratingRanks;
 
     public ConfigResponse() {
     }
@@ -36,5 +37,13 @@ public class ConfigResponse {
             filters = new ArrayList<FilterConfig>();
         }
         filters.add(filter);
+    }
+
+    public List<RatingRankInfo> getRatingRanks() {
+        return ratingRanks;
+    }
+
+    public void setRatingRanks(List<RatingRankInfo> ratingRanks) {
+        this.ratingRanks = ratingRanks;
     }
 }
