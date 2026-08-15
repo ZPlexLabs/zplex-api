@@ -120,3 +120,26 @@ Run directly with Maven:
 ```
 
 ---
+
+## 📚 Tech stack & dependencies
+
+Multi-module Maven project (modules: `api`, `auth`, `common`, `config`, `filter-parser`,
+`health`, `media`, `movies`, `suggestions`, `tvshows`). Requires **JDK 21** (set
+`JAVA_HOME` to a 21 JDK if the system default is older).
+
+| Dependency | Version | Notes |
+|------------|---------|-------|
+| Spring Boot | **4.1.0** | Upgraded from 3.5.5 → 4.x (Spring Framework 7 / Security 7). Builds clean, no code changes needed. |
+| springdoc-openapi | 3.1.0 | Spring Boot 4 compatible line (was 2.8.x for Boot 3) |
+| jjwt (io.jsonwebtoken) | 0.13.0 | JWT signing/verification |
+| gson | 2.14.0 | JSON serialization |
+| antlr4 | 4.13.2 | filter-parser DSL grammar |
+| postgresql | managed by Boot BOM (42.7.x) | JDBC driver |
+
+Build gate (no tests in this project): `./mvnw -q -DskipTests package`.
+
+> Note: the `json.version` property in the parent POM is currently unused (no `org.json`
+> dependency references it).
+
+---
+
