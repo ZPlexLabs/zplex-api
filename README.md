@@ -62,6 +62,17 @@ CORS is denied by default. Cross-origin browser clients must be allow-listed via
 `zplex.cors.allowed-origins` (comma-separated, e.g. `ZPLEX_CORS_ALLOWED_ORIGINS=https://app.example.com`);
 native clients are unaffected.
 
+## 📺 Watch state (`/api/me`)
+
+Per-user, server-side watch state keyed by the JWT username (module `userdata`):
+
+| Endpoint | Body / Response | Description |
+|----------|-----------------|-------------|
+| `PUT /api/me/progress` | `{ mediaType, tmdbId, seasonNumber?, episodeNumber?, progressMs, durationMs }` | Upsert resume position (season/episode default `0` for movies) |
+| `GET /api/me/continue-watching` | `ContinueWatchingItem[]` | In-progress titles (finished items at ≥90% are excluded), newest first |
+
+> `/api/me/**` access control (require `VIEW`) is registered in `SecurityConfig` in task B4.
+
 ---
 
 ## 📦 Requirements
