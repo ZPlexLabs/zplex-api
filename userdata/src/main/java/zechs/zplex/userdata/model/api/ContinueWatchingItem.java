@@ -6,6 +6,7 @@ import zechs.zplex.userdata.model.WatchProgress;
 import java.time.Instant;
 
 public record ContinueWatchingItem(
+        Long id,
         MediaType mediaType,
         Integer tmdbId,
         int seasonNumber,
@@ -16,6 +17,7 @@ public record ContinueWatchingItem(
 ) {
     public static ContinueWatchingItem from(WatchProgress progress) {
         return new ContinueWatchingItem(
+                progress.getId(),
                 progress.getMediaType(),
                 progress.getTmdbId(),
                 progress.getSeasonNumber(),

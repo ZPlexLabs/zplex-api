@@ -15,4 +15,6 @@ public interface WatchProgressRepository extends JpaRepository<WatchProgress, Lo
             String username, Integer tmdbId, MediaType mediaType, int seasonNumber, int episodeNumber);
 
     void deleteByUsernameAndTmdbIdAndMediaType(String username, Integer tmdbId, MediaType mediaType);
+
+    long deleteByIdAndUsername(Long id, String username);
 }

@@ -59,6 +59,11 @@ public class WatchProgressService {
                 .toList();
     }
 
+    @Transactional
+    public boolean dismiss(String username, Long id) {
+        return watchProgressRepository.deleteByIdAndUsername(id, username) > 0;
+    }
+
     private boolean isInProgress(WatchProgress progress) {
         if (progress.getDurationMs() <= 0) {
             return true;

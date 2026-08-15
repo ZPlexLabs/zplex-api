@@ -70,6 +70,7 @@ Per-user, server-side watch state keyed by the JWT username (module `userdata`):
 |----------|-----------------|-------------|
 | `PUT /api/me/progress` | `{ mediaType, tmdbId, seasonNumber?, episodeNumber?, progressMs, durationMs }` | Upsert resume position (season/episode default `0` for movies); auto-marks played at ≥90% |
 | `GET /api/me/continue-watching` | `ContinueWatchingItem[]` | In-progress titles (finished items at ≥90% are excluded), newest first |
+| `DELETE /api/me/continue-watching/{id}` | — | Dismiss a resumed title (scoped to the caller; `404` if not theirs) |
 | `GET /api/me/history` | `ContinueWatchingItem[]` | Full watch history (all titles with a resume position), newest first |
 | `GET /api/me/watchlist` | `WatchlistItemResponse[]` | Watchlist, newest first |
 | `POST /api/me/watchlist` | `{ mediaType, tmdbId }` | Add a title to the watchlist (idempotent) |

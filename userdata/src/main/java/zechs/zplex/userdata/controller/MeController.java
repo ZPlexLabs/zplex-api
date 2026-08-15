@@ -132,6 +132,33 @@ public class MeController {
         }
     }
 
+    @DeleteMapping("/continue-watching/{id}")
+    @Operation(summary = "Dismiss a resumed title from the authenticated user's continue-watching")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Dismissed"),
+            @ApiResponse(responseCode = "404", description = "No matching item for this user"),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> dismissContinueWatching(@PathVariable Long id,
+                                                     @AuthenticationPrincipal User user) {
+        try {
+            boolean removed = watchProgressService.dismiss(user.getUsername(), id);
+            return removed
+                    ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception while dismissing continue-watching item", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     @GetMapping("/watchlist")
     @Operation(summary = "List the authenticated user's watchlist")
     @ApiResponses(value = {
