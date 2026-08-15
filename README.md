@@ -35,9 +35,10 @@ Library ids: `1 = MOVIES`, `2 = SHOWS`. Rating ranks are served by `GET /api/con
 (`ratingRanks`). Effective visibility = within `allowedLibraries` AND rating rank ≤
 `maxRatingRank` (NULL rating governed by `allowUnrated`), minus blacklisted titles.
 
-This is enforced on the browse lists `GET /api/movie` and `GET /api/tvshows`: a disallowed
-library returns an empty page, and `search_media`/`count_media` drop over-rated and
-blacklisted titles. (Recently-added lists and suggestions are filtered in a follow-up.)
+This is enforced on the browse lists `GET /api/movie` and `GET /api/tvshows` and the
+recently-added lists `GET /api/movie/latest` and `GET /api/tvshows/latest`: a disallowed
+library returns an empty response, and over-rated or blacklisted titles are dropped.
+(Suggestions are filtered in a follow-up.)
 
 ---
 

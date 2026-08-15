@@ -16,6 +16,7 @@ import zechs.zplex.movies.model.MovieDetails;
 import zechs.zplex.movies.model.mapper.LatestMovieMapper;
 import zechs.zplex.movies.model.mapper.MovieDetailsMapper;
 
+import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -36,12 +37,18 @@ public class MoviesRepository extends MediaRepository {
         return MOVIES_TABLE_NAME;
     }
 
-    public List<LatestMovie> getLatestMovies(int count) {
+    public List<LatestMovie> getLatestMovies(int count, UserAccess access) {
         String sql = "SELECT m.id, m.title, m.poster_path, m.backdrop_path, m.release_year " +
                 "FROM movies m INNER JOIN files f ON m.file_id = f.id " +
+                "WHERE " + accessPredicateSql("m") + " " +
                 "ORDER BY f.modified_time DESC LIMIT ?";
         LOGGER.info("Fetching " + count + " latest movies from database...");
-        return jdbcTemplate.query(sql, new LatestMovieMapper(), count);
+        return jdbcTemplate.query(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            int index = bindAccessPredicate(ps, 1, connection, access);
+            ps.setInt(index, count);
+            return ps;
+        }, new LatestMovieMapper());
     }
 
     public List<MediaListItem> getMovies(Filter filter, SortBy sort, OrderBy order, Integer pageNumber, Integer pageSize, boolean includeNull, UserAccess access) {

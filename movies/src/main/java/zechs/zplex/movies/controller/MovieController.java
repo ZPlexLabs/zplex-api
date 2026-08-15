@@ -71,9 +71,15 @@ public class MovieController {
                     )
             )
     })
-    public ResponseEntity<?> getLatestMovies() {
+    public ResponseEntity<?> getLatestMovies(@AuthenticationPrincipal User user) {
         try {
-            List<LatestMovie> latestMovies = moviesRepository.getLatestMovies(LATEST_MOVIES_COUNT);
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            if (!access.isLibraryAllowed(Library.MOVIES.getId())) {
+                return ResponseEntity.status(HttpStatus.OK)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(List.of());
+            }
+            List<LatestMovie> latestMovies = moviesRepository.getLatestMovies(LATEST_MOVIES_COUNT, access);
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(latestMovies);

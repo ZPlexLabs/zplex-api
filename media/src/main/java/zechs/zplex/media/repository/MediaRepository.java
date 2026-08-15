@@ -119,6 +119,30 @@ public abstract class MediaRepository {
         return index;
     }
 
+    // Access WHERE fragment for inline queries (7 placeholders): keeps rows within the rating ceiling (or unrated when allowed) and not blacklisted.
+    protected String accessPredicateSql(String alias) {
+        return "(?::text[] IS NULL"
+                + " OR " + alias + ".parental_rating = ANY(?::text[])"
+                + " OR (? AND (" + alias + ".parental_rating IS NULL"
+                + " OR (?::text[] IS NOT NULL AND " + alias + ".parental_rating = ANY(?::text[])))))"
+                + " AND (?::int[] IS NULL OR " + alias + ".id <> ALL(?::int[]))";
+    }
+
+    // Binds the 7 placeholders of accessPredicateSql in order; returns the next index.
+    protected int bindAccessPredicate(PreparedStatement ps, int index, Connection connection, UserAccess access) throws SQLException {
+        String[] allowed = allowedRatings(access);
+        String[] unrated = unratedRatings();
+        Integer[] blacklist = access.getBlacklistedTmdbIds(mediaType).toArray(new Integer[0]);
+        setArrayExact(ps, index++, connection, allowed, "TEXT");
+        setArrayExact(ps, index++, connection, allowed, "TEXT");
+        ps.setBoolean(index++, access.isAllowUnrated());
+        setArrayExact(ps, index++, connection, unrated, "TEXT");
+        setArrayExact(ps, index++, connection, unrated, "TEXT");
+        setArrayExact(ps, index++, connection, blacklist, "INTEGER");
+        setArrayExact(ps, index++, connection, blacklist, "INTEGER");
+        return index;
+    }
+
     private String[] allowedRatings(UserAccess access) {
         if (access.getMaxRatingRank() >= MAX_DEFINED_RANK) {
             return null; // no ceiling

@@ -20,6 +20,7 @@ import zechs.zplex.tvshows.model.mapper.LatestTvShowMapper;
 import zechs.zplex.tvshows.model.mapper.SeasonMapper;
 import zechs.zplex.tvshows.model.mapper.TvShowDetailsMapper;
 
+import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -40,7 +41,7 @@ public class TvShowsRepository extends MediaRepository {
         return SHOWS_TABLE_NAME;
     }
 
-    public List<LatestTvShow> getLatestShows(int count) {
+    public List<LatestTvShow> getLatestShows(int count, UserAccess access) {
         String sql = """
                     SELECT s.id AS tmdbId,
                            s.title,
@@ -56,12 +57,18 @@ public class TvShowsRepository extends MediaRepository {
                              INNER JOIN seasons se ON s.id = se.show_id
                              INNER JOIN episodes e ON se.id = e.season_id
                              INNER JOIN files f ON e.file_id = f.id
+                    WHERE %s
                     GROUP BY s.id, s.title, s.poster_path, s.backdrop_path, s.release_year, s.release_year_to
                     ORDER BY MAX(f.modified_time) DESC
                     LIMIT ?
-                """;
+                """.formatted(accessPredicateSql("s"));
         LOGGER.info("Fetching " + count + " latest shows from database...");
-        return jdbcTemplate.query(sql, new LatestTvShowMapper(), count);
+        return jdbcTemplate.query(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            int index = bindAccessPredicate(ps, 1, connection, access);
+            ps.setInt(index, count);
+            return ps;
+        }, new LatestTvShowMapper());
     }
 
     public List<MediaListItem> getShows(Filter filter, SortBy sort, OrderBy order, Integer pageNumber, Integer pageSize, boolean includeNull, UserAccess access) {

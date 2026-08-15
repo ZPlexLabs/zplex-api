@@ -74,9 +74,15 @@ public class TvShowsController {
                     )
             )
     })
-    public ResponseEntity<?> getLatestShows() {
+    public ResponseEntity<?> getLatestShows(@AuthenticationPrincipal User user) {
         try {
-            List<LatestTvShow> latestTvShows = tvShowsRepository.getLatestShows(LATEST_SHOWS_COUNT);
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            if (!access.isLibraryAllowed(Library.SHOWS.getId())) {
+                return ResponseEntity.status(HttpStatus.OK)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(List.of());
+            }
+            List<LatestTvShow> latestTvShows = tvShowsRepository.getLatestShows(LATEST_SHOWS_COUNT, access);
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(latestTvShows);
