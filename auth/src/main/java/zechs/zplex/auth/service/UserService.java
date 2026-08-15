@@ -33,11 +33,14 @@ public class UserService {
     private static final Logger logger = Logger.getLogger(UserService.class.getName());
     private final UserRepository userRepository;
     private final UserBlacklistRepository userBlacklistRepository;
+    private final UserAccessService userAccessService;
 
     @Autowired
-    public UserService(UserRepository userRepository, UserBlacklistRepository userBlacklistRepository) {
+    public UserService(UserRepository userRepository, UserBlacklistRepository userBlacklistRepository,
+                       UserAccessService userAccessService) {
         this.userRepository = userRepository;
         this.userBlacklistRepository = userBlacklistRepository;
+        this.userAccessService = userAccessService;
     }
 
     @Transactional
@@ -187,6 +190,7 @@ public class UserService {
         try {
             User user = getUserByUsername(username);
             userRepository.delete(user);
+            userAccessService.evict(username);
             logger.log(Level.INFO, "Deleted user: " + username);
         } catch (UserDoesNotExist ex) {
             throw ex;
@@ -223,6 +227,7 @@ public class UserService {
         user.setMaxRatingRank(maxRatingRank);
         user.setAllowUnrated(allowUnrated);
         userRepository.save(user);
+        userAccessService.evict(username);
         logger.log(Level.INFO, "Updated access for user: " + username);
     }
 
@@ -238,6 +243,7 @@ public class UserService {
     public void addToBlacklist(String username, MediaType mediaType, int tmdbId) throws UserDoesNotExist {
         getUserByUsername(username);
         userBlacklistRepository.save(new UserBlacklist(username, mediaType, tmdbId));
+        userAccessService.evict(username);
         logger.log(Level.INFO, "Blacklisted " + mediaType + " " + tmdbId + " for user: " + username);
     }
 
@@ -245,6 +251,7 @@ public class UserService {
     public void removeFromBlacklist(String username, MediaType mediaType, int tmdbId) throws UserDoesNotExist {
         getUserByUsername(username);
         userBlacklistRepository.deleteById(new UserBlacklistId(username, mediaType, tmdbId));
+        userAccessService.evict(username);
         logger.log(Level.INFO, "Removed blacklist " + mediaType + " " + tmdbId + " for user: " + username);
     }
 }

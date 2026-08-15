@@ -17,4 +17,8 @@ public class SimpleCache<K, V> {
     public V get(K key) {
         return cache.get(key);
     }
+
+    public void remove(K key) {
+        cache.remove(key);
+    }
 }
