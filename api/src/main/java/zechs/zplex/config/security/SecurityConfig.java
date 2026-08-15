@@ -38,6 +38,9 @@ public class SecurityConfig {
                         .permitAll()
 
                         // Admin endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signup")
+                        .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())
+
                         .requestMatchers(HttpMethod.PUT, "/api/auth/admin/users/{username}/capabilities")
                         .hasAuthority(Capabilities.UPDATE_USERS_CAPABILITIES.getIdAsString())
 

@@ -10,7 +10,6 @@ public class Endpoints {
     public static final String[] PUBLIC = {
             "/health",
             "/api/auth/login",
-            "/api/auth/signup",
             "/api/auth/refresh"
     };
 

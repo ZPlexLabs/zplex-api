@@ -21,10 +21,14 @@ It provides authentication, user management, and integrations with external serv
 ## 🔐 Admin user management
 
 Endpoints under `/api/auth/admin/**` require the `UPDATE_USERS_CAPABILITIES` capability
-(`DELETE /users/{username}` requires `DELETE_USERS`):
+(`DELETE /users/{username}` requires `DELETE_USERS`). Account creation via
+`POST /api/auth/signup` is **admin-only** (same `UPDATE_USERS_CAPABILITIES` capability); the
+first admin is provisioned at startup from the `ADMIN_PASSWORD` env. New accounts start with
+**no access** (empty libraries, `maxRatingRank=0`, `allowUnrated=false`) until an admin grants it.
 
 | Method & path | Body | Purpose |
 |---------------|------|---------|
+| `POST /api/auth/signup` | `{ firstName, lastName, username, password }` | Create a new (no-access) account — admin only |
 | `GET /api/auth/admin/users` | — | List users with capabilities, library/rating access, and blacklist |
 | `PUT /api/auth/admin/users/{username}/capabilities` | `{ capabilities: int[] }` | Set global capabilities |
 | `PUT /api/auth/admin/users/{username}/access` | `{ allowedLibraries: int[], maxRatingRank: int, allowUnrated: bool }` | Set library scope + rating ceiling |
