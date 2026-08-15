@@ -25,6 +25,7 @@
         <module>movies</module>
         <module>media</module>
         <module>tvshows</module>
+        <module>userdata</module>
     </modules>
     <properties>
         <java.version>21</java.version>

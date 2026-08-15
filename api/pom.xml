@@ -54,6 +54,12 @@
             <artifactId>tvshows</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>zechs.zplex</groupId>
+            <artifactId>userdata</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

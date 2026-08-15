@@ -13,6 +13,7 @@ It provides authentication, user management, and integrations with external serv
 - Valkey/Redis brute-force rate-limiter on `/api/auth/login`
 - Admin user bootstrap
 - Per-user access control (libraries, rating ceiling, per-title blacklist)
+- Server-side watch state (`watch_progress`, `watchlist`, `played`), keyed by username
 - PostgreSQL persistence
 - Redis caching
 - Configurable via environment variables
@@ -171,7 +172,7 @@ Run directly with Maven:
 ## 📚 Tech stack & dependencies
 
 Multi-module Maven project (modules: `api`, `auth`, `common`, `config`, `filter-parser`,
-`health`, `media`, `movies`, `suggestions`, `tvshows`). Requires **JDK 21** (set
+`health`, `media`, `movies`, `suggestions`, `tvshows`, `userdata`). Requires **JDK 21** (set
 `JAVA_HOME` to a 21 JDK if the system default is older).
 
 | Dependency | Version | Notes |
