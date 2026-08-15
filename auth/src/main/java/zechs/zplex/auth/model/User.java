@@ -31,6 +31,16 @@ public class User {
     @Column(nullable = false)
     private boolean isAdult;
 
+    @Column(name = "allowed_libraries")
+    @Convert(converter = IntArrayConverter.class)
+    private int[] allowedLibraries;
+
+    @Column(name = "max_rating_rank")
+    private Integer maxRatingRank;
+
+    @Column(name = "allow_unrated")
+    private Boolean allowUnrated;
+
     public User() {
     }
 
@@ -101,6 +111,30 @@ public class User {
 
     public void setAdult(Boolean adult) {
         isAdult = adult;
+    }
+
+    public int[] getAllowedLibraries() {
+        return allowedLibraries == null ? new int[0] : allowedLibraries;
+    }
+
+    public void setAllowedLibraries(int[] allowedLibraries) {
+        this.allowedLibraries = allowedLibraries;
+    }
+
+    public int getMaxRatingRank() {
+        return maxRatingRank == null ? 0 : maxRatingRank;
+    }
+
+    public void setMaxRatingRank(int maxRatingRank) {
+        this.maxRatingRank = maxRatingRank;
+    }
+
+    public boolean isAllowUnrated() {
+        return allowUnrated != null && allowUnrated;
+    }
+
+    public void setAllowUnrated(boolean allowUnrated) {
+        this.allowUnrated = allowUnrated;
     }
 
     @Override

@@ -11,6 +11,7 @@ import zechs.zplex.auth.repository.UserRepository;
 import zechs.zplex.auth.utils.PasswordUtil;
 import zechs.zplex.common.capability.Capabilities;
 import zechs.zplex.common.capability.Capability;
+import zechs.zplex.common.model.Library;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -49,6 +50,9 @@ public class UserService {
             admin.setPassword(PasswordUtil.hashPassword(envAdminPassword));
             admin.setCapabilities(new int[]{1, 2, 3, 4, 5});
             admin.setAdult(true);
+            admin.setAllowedLibraries(Library.getAllIds());
+            admin.setMaxRatingRank(Integer.MAX_VALUE); // no rating ceiling
+            admin.setAllowUnrated(true);
 
             userRepository.save(admin);
             logger.log(Level.INFO, "Created admin user successfully.");
@@ -70,17 +74,22 @@ public class UserService {
 
             boolean updateCapabilities = !Arrays.equals(admin.getCapabilities(), supportedCapabilityIds);
             boolean updatePassword = !admin.getPassword().equals(PasswordUtil.hashPassword(envAdminPassword));
+            boolean updateAccess = !Arrays.equals(admin.getAllowedLibraries(), Library.getAllIds())
+                    || admin.getMaxRatingRank() != Integer.MAX_VALUE
+                    || !admin.isAllowUnrated();
 
-            if (updateCapabilities || updatePassword) {
+            if (updateCapabilities || updatePassword || updateAccess) {
                 if (updateCapabilities) admin.setCapabilities(supportedCapabilityIds);
                 if (updatePassword) admin.setPassword(PasswordUtil.hashPassword(envAdminPassword));
+                if (updateAccess) {
+                    admin.setAllowedLibraries(Library.getAllIds());
+                    admin.setMaxRatingRank(Integer.MAX_VALUE); // no rating ceiling
+                    admin.setAllowUnrated(true);
+                }
 
                 userRepository.save(admin);
 
-                logger.log(Level.INFO, "Admin user updated with new " +
-                        (updateCapabilities ? "capabilities" : "") +
-                        (updateCapabilities && updatePassword ? " and " : "") +
-                        (updatePassword ? "password" : "") + ".");
+                logger.log(Level.INFO, "Admin user updated.");
             } else {
                 logger.log(Level.INFO, "Admin user is up-to-date.");
             }
@@ -120,6 +129,9 @@ public class UserService {
             newUser.setPassword(PasswordUtil.hashPassword(signupRequest.password()));
             newUser.setCapabilities(new int[]{});
             newUser.setAdult(false);
+            newUser.setAllowedLibraries(new int[]{}); // no library access until admin grants
+            newUser.setMaxRatingRank(0);
+            newUser.setAllowUnrated(false);
 
             userRepository.save(newUser);
             logger.log(Level.INFO, "User " + signupRequest.username() + " created.");
