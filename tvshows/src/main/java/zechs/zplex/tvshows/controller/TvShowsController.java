@@ -17,8 +17,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import zechs.zplex.auth.model.User;
+import zechs.zplex.auth.service.UserAccessService;
 import zechs.zplex.common.model.ErrorResponse;
+import zechs.zplex.common.model.Library;
 import zechs.zplex.common.model.PaginatedResponse;
+import zechs.zplex.common.model.UserAccess;
 import zechs.zplex.filter_parser.FilterExtractor;
 import zechs.zplex.filter_parser.model.Filter;
 import zechs.zplex.media.model.MediaListItem;
@@ -43,10 +48,12 @@ public class TvShowsController {
 
     private static final int LATEST_SHOWS_COUNT = 10;
     private final TvShowsRepository tvShowsRepository;
+    private final UserAccessService userAccessService;
 
     @Autowired
-    public TvShowsController(TvShowsRepository tvShowsRepository) {
+    public TvShowsController(TvShowsRepository tvShowsRepository, UserAccessService userAccessService) {
         this.tvShowsRepository = tvShowsRepository;
+        this.userAccessService = userAccessService;
     }
 
     @GetMapping("/latest")
@@ -105,7 +112,8 @@ public class TvShowsController {
             @RequestParam(required = false) Optional<String> filterBy,
             @RequestParam(required = false) Optional<Integer> pageNumber,
             @RequestParam(required = false) Optional<Integer> pageSize,
-            @RequestParam(required = false, defaultValue = "true") Boolean includeNull
+            @RequestParam(required = false, defaultValue = "true") Boolean includeNull,
+            @AuthenticationPrincipal User user
     ) {
         try {
             SortBy sortByValue = sortBy.orElse(SortBy.TITLE);
@@ -114,8 +122,15 @@ public class TvShowsController {
             Integer pageNumberByValue = pageNumber.orElse(1);
             Integer pageSizeByValue = pageSize.orElse(25);
 
+            UserAccess access = userAccessService.getAccess(user.getUsername());
+            if (!access.isLibraryAllowed(Library.SHOWS.getId())) {
+                return ResponseEntity.status(HttpStatus.OK)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(new PaginatedResponse<>(List.of(), pageNumberByValue, 0));
+            }
+
             Filter filters = FilterExtractor.parseFilters(filterByValue);
-            Integer count = tvShowsRepository.countShows(filters, includeNull);
+            Integer count = tvShowsRepository.countShows(filters, includeNull, access);
             int pageCount = (int) Math.ceil((double) count / pageSizeByValue);
             if (pageNumberByValue > pageCount && pageCount != 0) {
                 return ResponseEntity.badRequest()
@@ -125,7 +140,7 @@ public class TvShowsController {
                         ));
             }
 
-            List<MediaListItem> shows = tvShowsRepository.getShows(filters, sortByValue, orderByValue, pageNumberByValue, pageSizeByValue, includeNull);
+            List<MediaListItem> shows = tvShowsRepository.getShows(filters, sortByValue, orderByValue, pageNumberByValue, pageSizeByValue, includeNull, access);
 
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)

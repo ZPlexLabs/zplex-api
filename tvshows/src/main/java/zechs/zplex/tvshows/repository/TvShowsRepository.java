@@ -3,7 +3,9 @@ package zechs.zplex.tvshows.repository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import zechs.zplex.common.model.MediaType;
+import zechs.zplex.common.model.UserAccess;
 import zechs.zplex.config.service.FilterConfigService;
+import zechs.zplex.config.service.ParentalRatingNormalizer;
 import zechs.zplex.filter_parser.model.Filter;
 import zechs.zplex.media.model.MediaListItem;
 import zechs.zplex.media.model.query_filters.OrderBy;
@@ -28,8 +30,9 @@ public class TvShowsRepository extends MediaRepository {
     private static final String SHOWS_TABLE_NAME = "shows";
     private static final String SHOWS_DETAILS_VIEW_NAME = "show_details_mv";
 
-    public TvShowsRepository(JdbcTemplate jdbcTemplate, FilterConfigService filterConfigService) {
-        super(jdbcTemplate, filterConfigService, MediaType.SHOW);
+    public TvShowsRepository(JdbcTemplate jdbcTemplate, FilterConfigService filterConfigService,
+                             ParentalRatingNormalizer ratingNormalizer) {
+        super(jdbcTemplate, filterConfigService, ratingNormalizer, MediaType.SHOW);
     }
 
     @Override
@@ -61,12 +64,12 @@ public class TvShowsRepository extends MediaRepository {
         return jdbcTemplate.query(sql, new LatestTvShowMapper(), count);
     }
 
-    public List<MediaListItem> getShows(Filter filter, SortBy sort, OrderBy order, Integer pageNumber, Integer pageSize, boolean includeNull) {
-        return getMedia(filter, sort, order, pageNumber, pageSize, includeNull);
+    public List<MediaListItem> getShows(Filter filter, SortBy sort, OrderBy order, Integer pageNumber, Integer pageSize, boolean includeNull, UserAccess access) {
+        return getMedia(filter, sort, order, pageNumber, pageSize, includeNull, access);
     }
 
-    public Integer countShows(Filter filter, boolean includeNull) {
-        return countMedia(filter, includeNull);
+    public Integer countShows(Filter filter, boolean includeNull, UserAccess access) {
+        return countMedia(filter, includeNull, access);
     }
 
     public TvShowDetails getShowById(Integer tmdbId) {
