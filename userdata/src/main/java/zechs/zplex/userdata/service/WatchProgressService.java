@@ -53,6 +53,12 @@ public class WatchProgressService {
                 .toList();
     }
 
+    public List<ContinueWatchingItem> getHistory(String username) {
+        return watchProgressRepository.findByUsernameOrderByUpdatedAtDesc(username).stream()
+                .map(ContinueWatchingItem::from)
+                .toList();
+    }
+
     private boolean isInProgress(WatchProgress progress) {
         if (progress.getDurationMs() <= 0) {
             return true;

@@ -70,6 +70,7 @@ Per-user, server-side watch state keyed by the JWT username (module `userdata`):
 |----------|-----------------|-------------|
 | `PUT /api/me/progress` | `{ mediaType, tmdbId, seasonNumber?, episodeNumber?, progressMs, durationMs }` | Upsert resume position (season/episode default `0` for movies); auto-marks played at ≥90% |
 | `GET /api/me/continue-watching` | `ContinueWatchingItem[]` | In-progress titles (finished items at ≥90% are excluded), newest first |
+| `GET /api/me/history` | `ContinueWatchingItem[]` | Full watch history (all titles with a resume position), newest first |
 | `GET /api/me/watchlist` | `WatchlistItemResponse[]` | Watchlist, newest first |
 | `POST /api/me/watchlist` | `{ mediaType, tmdbId }` | Add a title to the watchlist (idempotent) |
 | `DELETE /api/me/watchlist/{mediaType}/{tmdbId}` | — | Remove a title from the watchlist |
@@ -77,7 +78,7 @@ Per-user, server-side watch state keyed by the JWT username (module `userdata`):
 | `POST /api/me/played` | `{ mediaType, tmdbId, seasonNumber?, episodeNumber? }` | Mark a title as played (idempotent) |
 | `DELETE /api/me/played/{mediaType}/{tmdbId}?seasonNumber=&episodeNumber=` | — | Unmark a title as played |
 
-> `/api/me/**` access control (require `VIEW`) is registered in `SecurityConfig` in task B4.
+> All `/api/me/**` endpoints require the `VIEW` capability (enforced in `SecurityConfig`).
 
 ---
 

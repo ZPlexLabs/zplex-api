@@ -105,6 +105,33 @@ public class MeController {
         }
     }
 
+    @GetMapping("/history")
+    @Operation(summary = "List the authenticated user's full watch history")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Watch history",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            array = @ArraySchema(schema = @Schema(implementation = ContinueWatchingItem.class))
+                    )
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<?> history(@AuthenticationPrincipal User user) {
+        try {
+            return ResponseEntity.ok(watchProgressService.getHistory(user.getUsername()));
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception while fetching watch history", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     @GetMapping("/watchlist")
     @Operation(summary = "List the authenticated user's watchlist")
     @ApiResponses(value = {

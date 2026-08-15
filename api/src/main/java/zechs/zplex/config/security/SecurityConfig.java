@@ -87,6 +87,10 @@ public class SecurityConfig {
                                 Capabilities.MANAGE_CONTENT.getIdAsString()
                         )
 
+                        // Personal watch state (all methods require VIEW)
+                        .requestMatchers("/api/me/**")
+                        .hasAuthority(Capabilities.VIEW.getIdAsString())
+
                         // Deny everything else
                         .anyRequest().denyAll()
                 );
